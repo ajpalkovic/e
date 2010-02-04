@@ -45,6 +45,7 @@
 #include "IAppPaths.h"
 #include "Strings.h"
 #include "ReplaceStringParser.h"
+#include "KeyboardShortcuts.h"
 
 // Document Icons
 #include "document.xpm"
@@ -5609,10 +5610,6 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 
 	m_lastScopePos = -1; // scope selections
 
-	// Menu shortcuts might have set commandMode
-	// without resetting it.
-	commandMode = event.ControlDown();
-
 	// Check if unicode value is safe to use instead of keycode
 	const wxChar c = event.GetUnicodeKey();
 // FIXME - is this needed (or it's just for speed?)
@@ -5621,43 +5618,66 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 	else 
 #endif
 	{
+
+	vector<int> events = KeyboardShortcuts::Instance().GetEvents(event);
+	for(int c = 0; c < events.size(); c++) {
+		switch(events[c]) {
+			case KEY_EDITOR_CTRL_PASTE:
+			case KEY_EDITOR_CTRL_COPY:
+			case KEY_EDITOR_CTRL_CUT:
+			case KEY_EDITOR_CTRL_DELETE_CURRENT_LINE:
+			case KEY_EDITOR_CTRL_SHOW_SCOPE_TIP:
+			case KEY_EDITOR_CTRL_COMPLETION:
+			case KEY_EDITOR_CTRL_CURSOR_WORD_LEFT:
+			case KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT:
+			case KEY_EDITOR_CTRL_TOP:
+			case KEY_EDITOR_CTRL_BOTTOM:
+			case KEY_EDITOR_CTRL_CURSOR_UP:
+			case KEY_EDITOR_CTRL_CURSOR_DOWN:
+			case KEY_EDITOR_CTRL_CLOSE_TAB:
+				commandMode = true;
+			default:
+				commandMode = false;
+		}
+
 		if (commandMode) {
 			DoCommand(key);
-			switch (key) {
-			case WXK_INSERT:
-			case 3: // Ctrl-C
+		}
+
+		switch(events[c]) {
+			case KEY_EDITOR_CTRL_COPY:
 				OnCopy();
 				break;
 
-			case 11: // Ctrl-K
+			case KEY_EDITOR_CTRL_DELETE_CURRENT_LINE: // Ctrl-K
 				DelCurrentLine(!event.ShiftDown());
 				break;
 
-			case 16: // Ctrl-P
+			case KEY_EDITOR_CTRL_SHOW_SCOPE_TIP: // Ctrl-P
 				ShowScopeTip();
 				break;
 
-			case 22: // Ctrl-V
+			case KEY_EDITOR_CTRL_PASTE: // Ctrl-V
 				OnPaste();
 				break;
 
-			case 24: // Ctrl-X
+			case KEY_EDITOR_CTRL_CUT: // Ctrl-X
 				OnCut();
 				break;
 
-			case WXK_SPACE: // Ctrl-space
+			case KEY_EDITOR_CTRL_COMPLETION: // Ctrl-space
 				DoCompletion();
 				break;
 
-			case WXK_LEFT: // Ctrl <-
+			case KEY_EDITOR_CTRL_CURSOR_WORD_LEFT: // Ctrl <-
 				CursorWordLeft(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_RIGHT: // Ctrl ->
+			case KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT: // Ctrl ->
 				CursorWordRight(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_UP: // Ctrl arrow up
+			case KEY_EDITOR_CTRL_CURSOR_UP: // Ctrl arrow up
 				if (event.ShiftDown() || event.AltDown()) CursorUp(true);
 				else {
 					scrollPos = scrollPos - (scrollPos % m_lines.GetLineHeight()) - m_lines.GetLineHeight();
@@ -5682,7 +5702,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 				break;
 
-			case WXK_DOWN: // Ctrl arrow down
+			case KEY_EDITOR_CTRL_CURSOR_DOWN: // Ctrl arrow down
 				if (event.ShiftDown() || event.AltDown()) CursorDown(true);
 				else {
 					const wxSize size = GetClientSize();
@@ -5707,7 +5727,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 				break;
 
-			case WXK_HOME:
+			case KEY_EDITOR_CTRL_TOP:
 				SetPos(0);
 
 				// Handle selection
@@ -5717,7 +5737,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				lastaction = ACTION_NONE;
 				break;
 
-			case WXK_END:
+			case KEY_EDITOR_CTRL_BOTTOM:
 				pos = GetLength();
 
 				// Check if end is in a fold
@@ -5734,115 +5754,27 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				lastaction = ACTION_NONE;
 				break;
 
-			case WXK_F4:
+			case KEY_EDITOR_CTRL_CLOSE_TAB:
 				// Close tab
 				break;
 
-			default:
-				commandMode = false; // do nothing if key is unmapped
-			}
-			wxLogDebug(wxT("ctrl %d"), key);
-		}
-
-		if (!commandMode) {
-			switch (key) {
-	#ifdef __WXDEBUG__
-			/*case WXK_F1:
-				// Simulate crash
-				pos = 0;
-				pos = 5 / pos;
-				break;*/
-
-			case WXK_F2:
-				// Simulate crash
-				wxASSERT(false);
-				break;
-
-			case WXK_F4:
-				m_lines.Print();
-				break;
-
-			case WXK_F5:
-				cxLOCKDOC_READ(m_doc)
-					doc.PrintAll();
-				cxENDLOCK
-				break;
-
-			case WXK_F7:
-				wxLogDebug(wxT("Charpos: %u"), m_lines.GetPos());
-				wxLogDebug(wxT("ScrollPos: %d"), scrollPos);
-				if (m_syntaxstyler.IsOk()) {
-					wxLogDebug(wxT("Scope:"));
-					const deque<const wxString*> scopes = m_syntaxstyler.GetScope(m_lines.GetPos());
-					for (unsigned int i = 0; i < scopes.size(); ++i)
-						wxLogDebug(wxT("%s"), scopes[i]->c_str());
-				}
-
-				//doc.Encode();
-				break;
-
-			case WXK_F8:
-				{
-					const wxSize size = GetClientSize();
-					const int last_scroll = m_lines.GetHeight() - size.y;
-					while(scrollPos < last_scroll) {
-						old_scrollPos = scrollPos;
-						++scrollPos;
-						DrawLayout(true);
-					}
-				}
-				return;
-
-			case WXK_F9:
-				{
-					tmCommand action;
-					action.input = tmCommand::ciSEL;
-					action.inputXml = true;
-					const char* test = "cat";
-					vector<char> content(test, test + strlen(test));
-					action.SwapContent(content);
-					action.output = tmCommand::coNEWDOC;
-					DoAction(action, NULL, false);
-				}
-				break;
-
-			case WXK_F10:
-				{
-					vector<SymbolRef> symbols;
-					m_syntaxstyler.GetSymbols(symbols);
-					for (vector<SymbolRef>::const_iterator p = symbols.begin(); p != symbols.end(); ++p)
-						wxLogDebug(wxT("%d-%d -> \"%s\" -> \"%s\""), p->start, p->end, GetText(p->start, p->end).c_str(), p->transform->c_str());
-				}
-				break;
-
-			case WXK_F11:
-				TestMilestones();
-				break;
-	#endif //__WXDEBUG__
-
-			case WXK_LEFT:
-			case WXK_NUMPAD_LEFT:
+			case KEY_EDITOR_CTRL_LEFT:
 				CursorLeft(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_RIGHT:
-			case WXK_NUMPAD_RIGHT:
+			case KEY_EDITOR_CTRL_RIGHT:
 				CursorRight(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_UP:
-			case WXK_NUMPAD_UP:
+			case KEY_EDITOR_CTRL_UP:
 				CursorUp(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_DOWN:
-			case WXK_NUMPAD_DOWN:
+			case KEY_EDITOR_CTRL_DOWN:
 				CursorDown(event.ShiftDown() || event.AltDown());
 				break;
 
-			case WXK_HOME:
-			case WXK_NUMPAD_HOME:
-			case WXK_NUMPAD_BEGIN:
+			case KEY_EDITOR_CTRL_HOME:
 				{
 					const unsigned int currentLine = m_lines.GetCurrentLine();
 					const unsigned int indentPos = m_lines.GetLineIndentPos(currentLine);
@@ -5865,8 +5797,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 				break;
 
-			case WXK_END:
-			case WXK_NUMPAD_END:
+			case KEY_EDITOR_CTRL_END:
 				m_lines.SetPos(m_lines.GetLineEndpos(m_lines.GetCurrentLine()));
 
 				// Handle selection
@@ -5876,25 +5807,17 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				lastaction = ACTION_NONE;
 				break;
 
-			case WXK_PAGEUP:
-			case WXK_NUMPAD_PAGEUP:
+			case KEY_EDITOR_CTRL_PAGEUP:
 				PageUp(event.ShiftDown());
 				lastaction = ACTION_NONE;
 				break;
 
-			case WXK_PAGEDOWN:
-			case WXK_NUMPAD_PAGEDOWN:
+			case KEY_EDITOR_CTRL_PAGEDOWN:
 				PageDown(event.ShiftDown());
 				lastaction = ACTION_NONE;
 				break;
 
-			case WXK_INSERT:
-			case WXK_NUMPAD_INSERT:
-				if (event.ShiftDown()) OnPaste();
-				break;
-
-			case WXK_DELETE:
-			case WXK_NUMPAD_DELETE:
+			case KEY_EDITOR_CTRL_DELETE:
 				if (event.ShiftDown()) OnCut();
 				else {
 					pos = m_lines.GetPos();
@@ -5999,7 +5922,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 				break;
 
-			case WXK_BACK:
+			case KEY_EDITOR_CTRL_BACKSPACE:
 				{
 					pos = m_lines.GetPos();
 
@@ -6087,8 +6010,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 				break;
 
-			case WXK_RETURN:
-			case WXK_NUMPAD_ENTER:
+			case KEY_EDITOR_CTRL_NEWLINE:
 				if (event.ShiftDown()) {
 					// Dismiss selections/snippets
 					if (m_snippetHandler.IsActive()) m_snippetHandler.Clear();
@@ -6101,34 +6023,110 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				InsertChar(wxChar('\n'));
 				break;
 
-			case WXK_TAB:
-			case WXK_NUMPAD_TAB:
+			case KEY_EDITOR_CTRL_TAB:
 				Tab();
 				break;
 
-			case WXK_ESCAPE:
+			case KEY_EDITOR_CTRL_ESCAPE:
 				if (m_snippetHandler.IsActive()) m_snippetHandler.Clear();
 				else if (m_lines.IsSelectionShadow()) m_lines.RemoveAllSelections();
 				else DoCompletion();
 				break;
 
 			default:
-				// If we process alt then menu shortcuts don't work
-				if (event.AltDown()) {
-					event.Skip();
-					return;
-				}
+				switch(key) {
+				#ifdef __WXDEBUG__
+					/*case WXK_F1:
+						// Simulate crash
+						pos = 0;
+						pos = 5 / pos;
+						break;*/
 
-				// Ignore unhandled keycodes
-				if (key >= WXK_START && key <= WXK_COMMAND) break;
-				//if (key >= WXK_SPECIAL1 && key <= WXK_SPECIAL20) break;
+					case WXK_F2:
+						// Simulate crash
+						wxASSERT(false);
+						break;
 
-				//if (wxIsprint(c)) { // Normal chars (does not work with 'ae', 'oslash', 'a-circle', etc.??)
-				if ((unsigned int)c > 31) // Normal chars
-					InsertChar(c);
-				else {
-					event.Skip();
-					return; // do nothing if we don't know the char
+					case WXK_F4:
+						m_lines.Print();
+						break;
+
+					case WXK_F5:
+						cxLOCKDOC_READ(m_doc)
+							doc.PrintAll();
+						cxENDLOCK
+						break;
+
+					case WXK_F7:
+						wxLogDebug(wxT("Charpos: %u"), m_lines.GetPos());
+						wxLogDebug(wxT("ScrollPos: %d"), scrollPos);
+						if (m_syntaxstyler.IsOk()) {
+							wxLogDebug(wxT("Scope:"));
+							const deque<const wxString*> scopes = m_syntaxstyler.GetScope(m_lines.GetPos());
+							for (unsigned int i = 0; i < scopes.size(); ++i)
+								wxLogDebug(wxT("%s"), scopes[i]->c_str());
+						}
+
+						//doc.Encode();
+						break;
+
+					case WXK_F8:
+						{
+							const wxSize size = GetClientSize();
+							const int last_scroll = m_lines.GetHeight() - size.y;
+							while(scrollPos < last_scroll) {
+								old_scrollPos = scrollPos;
+								++scrollPos;
+								DrawLayout(true);
+							}
+						}
+						return;
+
+					case WXK_F9:
+						{
+							tmCommand action;
+							action.input = tmCommand::ciSEL;
+							action.inputXml = true;
+							const char* test = "cat";
+							vector<char> content(test, test + strlen(test));
+							action.SwapContent(content);
+							action.output = tmCommand::coNEWDOC;
+							DoAction(action, NULL, false);
+						}
+						break;
+
+					case WXK_F10:
+						{
+							vector<SymbolRef> symbols;
+							m_syntaxstyler.GetSymbols(symbols);
+							for (vector<SymbolRef>::const_iterator p = symbols.begin(); p != symbols.end(); ++p)
+								wxLogDebug(wxT("%d-%d -> \"%s\" -> \"%s\""), p->start, p->end, GetText(p->start, p->end).c_str(), p->transform->c_str());
+						}
+						break;
+
+					case WXK_F11:
+						TestMilestones();
+						break;
+				#endif //__WXDEBUG__
+					default:
+
+					// If we process alt then menu shortcuts don't work
+					if (event.AltDown()) {
+						event.Skip();
+						return;
+					}
+
+					// Ignore unhandled keycodes
+					if (key >= WXK_START && key <= WXK_COMMAND) break;
+					//if (key >= WXK_SPECIAL1 && key <= WXK_SPECIAL20) break;
+
+					//if (wxIsprint(c)) { // Normal chars (does not work with 'ae', 'oslash', 'a-circle', etc.??)
+					if ((unsigned int)c > 31) // Normal chars
+						InsertChar(c);
+					else {
+						event.Skip();
+						return; // do nothing if we don't know the char
+					}
 				}
 			}
 		}

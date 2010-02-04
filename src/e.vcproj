@@ -1402,6 +1402,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\KeyboardShortcuts.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\KeyboardShortcuts.h"
+			>
+		</File>
+		<File
 			RelativePath="LineList.h"
 			>
 		</File>

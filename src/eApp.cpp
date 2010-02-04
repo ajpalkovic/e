@@ -35,6 +35,7 @@
 #include "EditorCtrl.h"
 #include "eDocumentPath.h"
 #include "AppVersion.h"
+#include "KeyboardShortcuts.h"
 
 #ifdef __WXMSW__
 #include <wx/msw/registry.h>
@@ -232,6 +233,8 @@ bool eApp::OnInit() {
 #else
 	m_settings.Load(m_appDataPath);
 #endif
+
+	KeyboardShortcuts::Instance().RegisterDefaultShortcuts();
 
 	// Apply options
 	if (clearState) ClearState();
