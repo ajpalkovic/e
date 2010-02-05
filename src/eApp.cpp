@@ -234,7 +234,7 @@ bool eApp::OnInit() {
 	m_settings.Load(m_appDataPath);
 #endif
 
-	KeyboardShortcuts::Instance().RegisterDefaultShortcuts();
+	KeyboardShortcuts::Instance().Init();
 
 	// Apply options
 	if (clearState) ClearState();
