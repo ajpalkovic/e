@@ -63,9 +63,9 @@ private:
 	struct KeyboardShortcut {
 		int code;
 		bool ctrl, shift, alt, meta, windows;
-		KeyboardShortcutType& type;
+		KeyboardShortcutType* type;
 		
-		KeyboardShortcut(KeyboardShortcutType& type, int code, bool ctrl, bool shift, bool alt, bool meta, bool windows) : 
+		KeyboardShortcut(KeyboardShortcutType* type, int code, bool ctrl, bool shift, bool alt, bool meta, bool windows) : 
 		type(type), code(code), ctrl(ctrl), shift(shift), alt(alt), meta(meta), windows(windows) {}
 	};
 	
@@ -79,12 +79,12 @@ private:
 		
 		KeyboardShortcutType(wxString name, bool allowSelection, bool allowVerticalSelection) : 
 		name(name), id(-1), hasPrimary(false), allowSelection(allowSelection), allowVerticalSelection(allowVerticalSelection) {}
-		void AddShortcut(KeyboardShortcut& shortcut) {
-			shortcuts.push_back(&shortcut);
+		void AddShortcut(KeyboardShortcut* shortcut) {
+			shortcuts.push_back(shortcut);
 		}
-		void AddPrimaryShortcut(KeyboardShortcut& shortcut) {
+		void AddPrimaryShortcut(KeyboardShortcut* shortcut) {
 			hasPrimary = true;
-			primaryShortcut = &shortcut;
+			primaryShortcut = shortcut;
 			AddShortcut(shortcut);
 		}
 	};
@@ -105,8 +105,8 @@ public:
 	void RegisterShortcut(wxString name, int id);
 	void SetupShortcutIntMapping();
 	
-	void CreateEventType(map<wxString, KeyboardShortcutType>& shortcuts, wxString name, bool allowSelection, bool allowVerticalSelection);
-	void CreateKeyBinding(map<wxString, KeyboardShortcutType>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows);
+	void CreateEventType(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool allowSelection, bool allowVerticalSelection);
+	void CreateKeyBinding(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows);
 
 	int GetEventType(wxKeyEvent& event);
 	wxString GetEventKeyBinding(wxString eventName);
@@ -114,9 +114,9 @@ public:
 	inline wxString Menu(wxString eventName) { return GetEventMenuText(eventName); }
 	
 private:
-	map<wxString, KeyboardShortcutType> m_shortcuts;
-	map<wxString, KeyboardShortcutType> m_defaultShortcuts;
-	multimap<int, KeyboardShortcut> m_keys;
+	map<wxString, KeyboardShortcutType*> m_shortcuts;
+	map<wxString, KeyboardShortcutType*> m_defaultShortcuts;
+	multimap<int, KeyboardShortcut*> m_keys;
 };
 
 #endif // __KEYBOARD_SHORTCUTS_H__

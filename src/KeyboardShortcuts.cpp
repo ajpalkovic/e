@@ -62,12 +62,12 @@ void KeyboardShortcuts::LoadCustomShortcuts() {
 void KeyboardShortcuts::SaveShortcuts() {}
 
 void KeyboardShortcuts::RegisterShortcut(wxString name, int id) {
-	map<wxString, KeyboardShortcutType>::iterator iterator;
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = m_shortcuts.find(name);
 	if(iterator == m_shortcuts.end()) return;
 
-	KeyboardShortcutType existingEvent = iterator->second;
-	existingEvent.id = id;
+	KeyboardShortcutType* existingEvent = iterator->second;
+	existingEvent->id = id;
 }
 
 void KeyboardShortcuts::SetupShortcutIntMapping() {
@@ -102,34 +102,34 @@ void KeyboardShortcuts::SetupShortcutIntMapping() {
 }
 
 //This funciton will be called once for each event type to set basic properties about the event
-void KeyboardShortcuts::CreateEventType(map<wxString, KeyboardShortcutType>& shortcuts, wxString name, bool allowSelection, bool allowVerticalSelection) {
+void KeyboardShortcuts::CreateEventType(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool allowSelection, bool allowVerticalSelection) {
 	if(shortcuts.find(name) == shortcuts.end()) {
 		//this event doesn't exist, lets add it
 		KeyboardShortcutType* type = new KeyboardShortcutType(name, allowSelection, allowVerticalSelection);
-		shortcuts.insert(shortcuts.begin(), pair<wxString, KeyboardShortcutType>(name, *type));
+		shortcuts.insert(shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(name, type));
 	} else {
 		//this event already exists.  o noz
 	}
 }
 
 //This function will be called multiple times to associate a key binding with an event type
-void KeyboardShortcuts::CreateKeyBinding(map<wxString, KeyboardShortcutType>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows) {
-	map<wxString, KeyboardShortcutType>::iterator iterator;
+void KeyboardShortcuts::CreateKeyBinding(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows) {
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = shortcuts.find(name);
 	if(iterator == shortcuts.end()) {
 		//no event exists with this name
 		return;
 	}
 	
-	KeyboardShortcutType type = iterator->second;
+	KeyboardShortcutType* type = iterator->second;
 	KeyboardShortcut* event = new KeyboardShortcut(type, code, ctrl, shift, alt, meta, windows);
-	if(primary) type.AddPrimaryShortcut(*event);
-	else type.AddShortcut(*event);
+	if(primary) type->AddPrimaryShortcut(event);
+	else type->AddShortcut(event);
 }
 
 int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
-	multimap<int, KeyboardShortcut>::iterator iterator;
-	pair<multimap<int, KeyboardShortcut>::iterator, multimap<int, KeyboardShortcut>::iterator> matches;
+	multimap<int, KeyboardShortcut*>::iterator iterator;
+	pair<multimap<int, KeyboardShortcut*>::iterator, multimap<int, KeyboardShortcut*>::iterator> matches;
 	
 	matches = m_keys.equal_range(event.GetKeyCode());
 	int eventCode = (event.ControlDown() ? 1 : 0) | (event.AltDown() ? 2 : 0) | (event.MetaDown() ? 4 : 0) | (event.ShiftDown() ? 8 : 0);
@@ -146,13 +146,12 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	//However, the user could also be selecting text.  Some of the existing code currently checks that inside of later method calls.  
 	//This means we need to ignore keys like shift and alt if the keyboard event type accepts selection input
 	for(iterator = matches.first; iterator != matches.second; ++iterator) {
-		//dunno y, but iterator.second isnt working
-		cur = &(iterator->second);
+		cur = iterator->second;
 		keyCode = (cur->ctrl ? 1 : 0) | (cur->alt ? 2 : 0) | (cur->meta ? 4 : 0) | (cur->shift ? 8 : 0) | (cur->windows ? 16 : 0);
 		keyCodeWithoutSelection = keyCode & 21;
 		
-		if(keyCode == eventCode || (cur->type.allowSelection && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
-			return cur->type.id;
+		if(keyCode == eventCode || (cur->type->allowSelection && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
+			return cur->type->id;
 		}
 		
 	}
@@ -161,13 +160,13 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 }
 
 wxString KeyboardShortcuts::GetEventKeyBinding(wxString eventName) {
-	map<wxString, KeyboardShortcutType>::iterator iterator;
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = m_shortcuts.find(eventName);
 	if(iterator == m_shortcuts.end()) return wxT("");
 
-	KeyboardShortcutType type = iterator->second;
-	if(!type.hasPrimary) return wxT("");
-	KeyboardShortcut* primary = type.primaryShortcut;
+	KeyboardShortcutType* type = iterator->second;
+	if(!type->hasPrimary) return wxT("");
+	KeyboardShortcut* primary = type->primaryShortcut;
 	
 	wxString ret = wxT("");
 	if(primary->ctrl) ret += wxT("Ctrl+");
