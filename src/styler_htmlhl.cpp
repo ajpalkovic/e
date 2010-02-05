@@ -16,6 +16,7 @@
 #include "StyleRun.h"
 #include "Lines.h"
 #include "Document.h"
+#include "EditorCtrl.h"
 
 inline bool isAlphaNumeric(wxChar c) {
 #ifdef __WXMSW__
@@ -34,8 +35,8 @@ inline bool isAlphaNumeric(wxChar c) {
  * When the cursor moves in any way, only the list of tags needs to be scanned to find 
  * the tag that is currently in focus, and its matching tag, if any.
  */
-Styler_HtmlHL::Styler_HtmlHL(const DocumentWrapper& rev, const Lines& lines, const tmTheme& theme, eSettings& settings)
-: m_doc(rev), m_lines(lines), m_theme(theme), m_settings(settings),
+Styler_HtmlHL::Styler_HtmlHL(const DocumentWrapper& rev, const Lines& lines, const tmTheme& theme, eSettings& settings, EditorCtrl& editorCtrl)
+: m_doc(rev), m_lines(lines), m_theme(theme), m_settings(settings), m_editorCtrl(editorCtrl),
   m_selectionHighlightColor(m_theme.selectionColor),
   m_searchHighlightColor(m_theme.searchHighlightColor)
 {
@@ -72,7 +73,7 @@ void Styler_HtmlHL::Reparse() {
 		FindAllBrackets(data);
 		FindTags(data);
 		m_currentTag = FindCurrentTag();
-		m_matchingTag = FindMatchingTag(data);
+		m_matchingTag = FindMatchingTag(data, m_currentTag);
 	cxENDLOCK
 }
 
@@ -82,7 +83,46 @@ void Styler_HtmlHL::UpdateCursorPosition(unsigned int pos) {
 	cxLOCKDOC_READ(m_doc)
 		wxString text = doc.GetText();
 		const wxChar* data = text.c_str();
-		m_matchingTag = FindMatchingTag(data);
+		m_matchingTag = FindMatchingTag(data, m_currentTag);
+	cxENDLOCK
+}
+
+void Styler_HtmlHL::SelectParentTag() {
+	//The Insert/Delete methods return if the highlight html option is not checked.
+	//This feature can still work without that, and it probably should.  However, we need to parse the doc to find the tags first.
+	if(!ShouldStyle()) Reparse();
+
+	cxLOCKDOC_READ(m_doc)
+		wxString text = doc.GetText();
+		const wxChar* data = text.c_str();
+		int closingTag, openingTag;
+
+		vector<interval> selections = m_editorCtrl.GetSelections();
+		if(selections.size() == 0) {
+			//nothing is currently selected, so lets just find the parent tag 
+			closingTag = FindParentClosingTag(m_cursorPosition);
+			if(closingTag < 0) return;
+
+			openingTag = FindMatchingTag(data, closingTag);
+			if(openingTag < 0) return;
+
+		} else {
+			interval first = selections[0];
+			closingTag = FindParentClosingTag(first.end);
+			if(closingTag < 0) return;
+
+			openingTag = FindMatchingTag(data, closingTag);
+			if(openingTag < 0) return;
+
+			//check if the selection matches the content of the current tag pair.  if it does, then select the parent tag
+			if(first.start == m_tags[openingTag].end+1 && first.end == m_tags[closingTag].start) {
+				closingTag = FindParentClosingTag(m_tags[closingTag].end);
+				if(closingTag < 0) return;
+				openingTag = FindMatchingTag(data, closingTag);
+				if(openingTag < 0) return;
+			}
+		}
+		m_editorCtrl.Select(m_tags[openingTag].end+1, m_tags[closingTag].start);
 	cxENDLOCK
 }
 
@@ -177,14 +217,14 @@ void Styler_HtmlHL::FindTags(const wxChar* data) {
 	}
 }
 
-int Styler_HtmlHL::FindMatchingTag(const wxChar* data) {
-	if(m_currentTag < 0) return -1;
-	TagInterval currentTag = m_tags[m_currentTag];
+int Styler_HtmlHL::FindMatchingTag(const wxChar* data, int tag) {
+	if(tag < 0) return -1;
+	TagInterval currentTag = m_tags[tag];
 	int stack = 1, size = (int)m_tags.size();
 
 	if(currentTag.isClosingTag) {
 		//search in reverse to find the matching opening tag	
-		for(int c = m_currentTag-1; c >= 0; --c) {
+		for(int c = tag-1; c >= 0; --c) {
 			if(SameTag(m_tags[c], currentTag, data)) {
 				stack += m_tags[c].isClosingTag ? 1 : -1;
 				if(stack == 0) return c;
@@ -192,7 +232,7 @@ int Styler_HtmlHL::FindMatchingTag(const wxChar* data) {
 		}
 	} else {
 		//search forward to find the matching closing tag
-		for(int c = m_currentTag+1; c < size; ++c) {
+		for(int c = tag+1; c < size; ++c) {
 			if(SameTag(m_tags[c], currentTag, data)) {
 				stack += m_tags[c].isClosingTag ? -1 : 1;
 				if(stack == 0) return c;
@@ -200,6 +240,24 @@ int Styler_HtmlHL::FindMatchingTag(const wxChar* data) {
 		}
 	}
 	
+	return -1;
+}
+
+int Styler_HtmlHL::FindParentClosingTag(unsigned int searchPosition) {
+	int stack = 1;
+	int size = (int)m_tags.size();
+
+	for(int c = 0; c < size; c++) {
+		//scan until we find tags that are after the cursor's position
+		if(m_tags[c].start < searchPosition) continue;
+		if(m_tags[c].isSelfClosingTag) continue;
+		if(m_tags[c].isClosingTag) {
+			stack--;
+			if(stack == 0) return c;
+		} else {
+			stack++;
+		}
+	}
 	return -1;
 }
 
@@ -227,7 +285,12 @@ bool Styler_HtmlHL::SameTag(TagInterval& openTag, TagInterval& closeTag, const w
 		c = data[openIndex];
 		
 		//once we hit non-alphanumber characters, then the tags have not differred so far, so it is valid
-		if(!isAlphaNumeric(c)) return true;		
+		if(!isAlphaNumeric(c)) {
+			//save the position of the end of the tag name so we dont have to recompute it when we highlight the tag later
+			openTag.tagNameEnd = openIndex;
+			closeTag.tagNameEnd = closeIndex;
+			return true;		
+		}
 		
 		if(c != data[closeIndex]) return false;
 		
@@ -237,8 +300,10 @@ bool Styler_HtmlHL::SameTag(TagInterval& openTag, TagInterval& closeTag, const w
 }
 
 Styler_HtmlHL::TagInterval::TagInterval(unsigned int start, unsigned int end, const wxChar* data) :
- start(start), end(end), isClosingTag(data[start+1]=='/')
+ start(start), end(end), tagNameEnd(0)
  {
+	 isSelfClosingTag = data[end-1] == '/';
+	 isClosingTag = isSelfClosingTag || data[start+1]=='/';
 }
 
 void Styler_HtmlHL::Style(StyleRun& sr) {
@@ -251,6 +316,10 @@ void Styler_HtmlHL::Style(StyleRun& sr) {
 		const unsigned int rend = sr.GetRunEnd();
 		TagInterval closingTag = m_tags[m_matchingTag];
 		unsigned int start = closingTag.start+2, end = closingTag.end;
+		if(!closingTag.isClosingTag) {
+			start = closingTag.start + 1;
+			end = closingTag.tagNameEnd;
+		}
 		
 		if (start > rend) return;
 
@@ -296,7 +365,7 @@ void Styler_HtmlHL::Insert(unsigned int start, unsigned int length) {
 		//it is much to difficult to take care of all the cases that could result
 		FindTags(data);
 		m_currentTag = FindCurrentTag();
-		m_matchingTag = FindMatchingTag(data);
+		m_matchingTag = FindMatchingTag(data, m_currentTag);
 	cxENDLOCK
 }
 
@@ -333,10 +402,10 @@ void Styler_HtmlHL::Delete(unsigned int start, unsigned int end) {
 		//it is much to difficult to take care of all the cases that could result
 		FindTags(data);
 		m_currentTag = FindCurrentTag();
-		m_matchingTag = FindMatchingTag(data);
+		m_matchingTag = FindMatchingTag(data, m_currentTag);
 	cxENDLOCK
 }
 
-void Styler_HtmlHL::ApplyDiff(const std::vector<cxChange>& changes) {
+void Styler_HtmlHL::ApplyDiff(const std::vector<cxChange>& WXUNUSED(changes)) {
 	Reparse();
 }
