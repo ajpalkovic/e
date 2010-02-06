@@ -37,6 +37,7 @@
 #include "IOpenTextmateURL.h"
 #include "ITabPage.h"
 
+#include "KeyboardShortcuts.h"
 
 class EditorCtrl;
 struct EditorChangeState;
@@ -60,7 +61,6 @@ class DiffPanel;
 class IEditorSearch;
 class RemoteThread;
 class SnippetList;
-
 
 class EditorFrame : public KeyHookable<wxFrame>,
 	public IFrameSymbolService,
@@ -492,6 +492,7 @@ private:
 	eSettings& m_generalSettings;
 	eFrameSettings m_settings;
 	TmSyntaxHandler& m_syntax_handler;
+	KeyboardShortcuts& m_keyboardShortcuts;
 
 	wxImageList imageList;
 	RemoteThread* m_remoteThread;

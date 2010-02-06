@@ -69,12 +69,17 @@
 #include "eauibook.h"
 #include "DiffDirPane.h"
 #include "SnippetList.h"
+#include "KeyboardShortcuts.h"
 
 #ifdef __WXMSW__
 // For multi-monitor-aware position restore on Windows, include WinUser.h
 #include "Winuser.h"
 #include <wx/msw/registry.h>
 #endif
+
+//A simple macro for looking up the keyboard shortcut for the menus
+#define M(name) m_keyboardShortcuts.GetEventMenuText(wxT(name)), wxT(name)
+#define M2(name, menu) m_keyboardShortcuts.GetEventMenuText(wxT(name)), menu, wxT(name)
 
 
 class FrameDropTarget : public wxFileDropTarget {
@@ -297,6 +302,7 @@ EditorFrame::EditorFrame(CatalystWrapper cat, unsigned int frameId,  const wxStr
 	m_generalSettings(eGetSettings()),
 	m_settings(m_generalSettings.GetFrameSettings(frameId)),
 	m_syntax_handler(syntax_handler),
+	m_keyboardShortcuts(KeyboardShortcuts::Instance()),
 
 	m_sizeChanged(false), m_needStateSave(true), m_keyDiags(false), m_inAskReload(false),
 	m_changeCheckerThread(NULL), editorCtrl(0), m_recentFilesMenu(NULL), m_recentProjectsMenu(NULL), m_bundlePane(NULL), m_diffPane(NULL),
@@ -524,37 +530,37 @@ void EditorFrame::InitMenus() {
 
 	// File menu
 	wxMenu *fileMenu = new wxMenu;
-	fileMenu->Append(wxID_NEW, _("&New\tCtrl+N"), _("New File"));
-	fileMenu->Append(wxID_OPEN, _("&Open...\tCtrl+O"), _("Open File"));
-	fileMenu->Append(MENU_DIFF, _("&Compare..."), _("Compare..."));
-	fileMenu->Append(MENU_NEWWINDOW, _("New Window"), _("Open New Window"));
+	fileMenu->Append(wxID_NEW, M("New File"));
+	fileMenu->Append(wxID_OPEN, M("Open File"));
+	fileMenu->Append(MENU_DIFF, M("Compare..."));
+	fileMenu->Append(MENU_NEWWINDOW, M("Open New Window"));
 	fileMenu->AppendSeparator();
-	fileMenu->Append(wxID_SAVE, _("&Save\tCtrl+S"), _("Save File"));
-	fileMenu->Append(wxID_SAVEAS, _("Save &As...\tCtrl-Shift-S"), _("Save File as"));
-	fileMenu->Append(MENU_SAVEALL, _("Save A&ll\tCtrl-Shift-A"), _("Save All Files"));
-	fileMenu->Append(MENU_COMMIT, _("&Make Milestone...\tCtrl+M"), _("Make Milestone of current revision"));
+	fileMenu->Append(wxID_SAVE, M("Save File"));
+	fileMenu->Append(wxID_SAVEAS, M("Save File as"));
+	fileMenu->Append(MENU_SAVEALL, M("Save All Files"));
+	fileMenu->Append(MENU_COMMIT, M("Make Milestone of current revision"));
 	fileMenu->AppendSeparator();
-	fileMenu->Append(MENU_OPENPROJECT, _("Open &Dir as Project..."), _("Open Dir as Project"));
-	fileMenu->Append(MENU_OPENREMOTE, _("Open Remote Folder (&FTP)..."), _("Open Remote Folder"));
-	fileMenu->Append(MENU_CLOSEPROJECT, _("Close Pro&ject"), _("Close Project"));
+	fileMenu->Append(MENU_OPENPROJECT, M("Open Dir as Project"));
+	fileMenu->Append(MENU_OPENREMOTE, M("Open Remote Folder"));
+	fileMenu->Append(MENU_CLOSEPROJECT, M("Close Project"));
 	fileMenu->AppendSeparator();
-	fileMenu->Append(MENU_SAVEFORMAT, _("Sa&ve format"), formatMenu, _("Save format"));
-	fileMenu->Append(MENU_IMPORT, _("&Import"), importMenu, _("Import"));
+	fileMenu->Append(MENU_SAVEFORMAT, M2("Save format", formatMenu));
+	fileMenu->Append(MENU_IMPORT, M2("Import", importMenu));
 	fileMenu->AppendSeparator();
 	m_recentFilesMenu = new wxMenu;
-	fileMenu->Append(MENU_RECENT_FILES, _("&Recent Files"), m_recentFilesMenu, _("Open recent Files"));
+	fileMenu->Append(MENU_RECENT_FILES, M2("Open recent Files", m_recentFilesMenu));
 	m_recentProjectsMenu = new wxMenu;
-	fileMenu->Append(MENU_RECENT_PROJECTS, _("&Recent Projects"), m_recentProjectsMenu, _("Open recent Projects"));
+	fileMenu->Append(MENU_RECENT_PROJECTS, M2("Open recent Projects", m_recentProjectsMenu));
 	fileMenu->AppendSeparator();
-	fileMenu->Append(wxID_PAGE_SETUP, _("Page Set&up..."), _("Page setup"));
+	fileMenu->Append(wxID_PAGE_SETUP, M("Page setup"));
 	//fileMenu->Append(wxID_PREVIEW, _("Print Pre&view"), _("Preview"));
-	fileMenu->Append(wxID_PRINT, _("&Print..."), _("Print"));
+	fileMenu->Append(wxID_PRINT, M("Print"));
 	fileMenu->AppendSeparator();
-	fileMenu->Append(MENU_CLOSE, _("&Close Tab\tCtrl+W"), _("Close Tab"));
-	fileMenu->Append(MENU_TABS_CLOSE_ALL, _("Close all &Tabs"), _("Close all Tabs"));
-	fileMenu->Append(MENU_TABS_CLOSE_OTHER, _("Clos&e other Tabs\tCtrl+Alt+W"), _("Close other Tabs"));
-	fileMenu->Append(MENU_CLOSEWINDOW, _("Close &Window"), _("Close Window"));
-	fileMenu->Append(wxID_EXIT, _("E&xit"), _("Exit"));
+	fileMenu->Append(MENU_CLOSE, M("Close Tab"));
+	fileMenu->Append(MENU_TABS_CLOSE_ALL, M("Close all Tabs"));
+	fileMenu->Append(MENU_TABS_CLOSE_OTHER, M("Close other Tabs"));
+	fileMenu->Append(MENU_CLOSEWINDOW, M("Close Window"));
+	fileMenu->Append(wxID_EXIT, M("Exit"));
 	menuBar->Append(fileMenu, _("&File"));
 
 	UpdateRecentFiles();
@@ -565,119 +571,119 @@ void EditorFrame::InitMenus() {
 
 	// Edit menu
 	wxMenu *editMenu = new wxMenu;
-	editMenu->Append(wxID_UNDO, _("&Undo\tCtrl+Z"), _("Undo"));
-	editMenu->Append(wxID_REDO, _("&Redo\tCtrl+Y"), _("Redo"));
+	editMenu->Append(wxID_UNDO, M("Undo"));
+	editMenu->Append(wxID_REDO, M("Redo"));
 	editMenu->AppendSeparator();
-	editMenu->Append(wxID_CUT, _("&Cut\tCtrl+X"), _("Cut"));
-	editMenu->Append(wxID_COPY, _("&Copy\tCtrl+C"), _("Copy"));
-	editMenu->Append(wxID_PASTE, _("&Paste\tCtrl+V"), _("Paste"));
+	editMenu->Append(wxID_CUT, M("Cut"));
+	editMenu->Append(wxID_COPY, M("Copy"));
+	editMenu->Append(wxID_PASTE, M("Paste"));
 	editMenu->AppendSeparator();
 
 	wxMenu* selectMenu = new wxMenu;
-		selectMenu->Append(wxID_SELECTALL, _("&All\tCtrl+A"), _("Select All"));
-		selectMenu->Append(MENU_SELECTWORD, _("&Word\tCtrl+Shift+W"), _("Select Word"));
-		selectMenu->Append(MENU_SELECTLINE, _("&Line\tCtrl+Shift+L"), _("Select Line"));
-		selectMenu->Append(MENU_SELECTSCOPE, _("&Current Scope\tCtrl+Shift+Space"), _("Select Current Scope"));
-		selectMenu->Append(MENU_SELECTFOLD, _("Current &Fold\tShift-F1"), _("Select Current Fold"));
-		selectMenu->Append(MENU_SELECTTAG, _("Tag &Content\tCtrl+,"), _("Select Parent Tag Content"));
-		editMenu->Append(MENU_SELECT, _("&Select"), selectMenu,  _("Select"));
+		selectMenu->Append(wxID_SELECTALL, M("Select All"));
+		selectMenu->Append(MENU_SELECTWORD, M("Select Word"));
+		selectMenu->Append(MENU_SELECTLINE, M("Select Line"));
+		selectMenu->Append(MENU_SELECTSCOPE, M("Select Current Scope"));
+		selectMenu->Append(MENU_SELECTFOLD, M("Select Current Fold"));
+		selectMenu->Append(MENU_SELECTTAG, M("Select Parent Tag Content"));
+		editMenu->Append(MENU_SELECT, M2("Select", selectMenu));
 
 	editMenu->AppendSeparator();
 	wxMenu* findMenu = new wxMenu;
-		findMenu->Append(wxID_FIND, _("&Find\tCtrl+F"), _("Find"));
-		findMenu->Append(MENU_FIND_IN_SEL, _("Find &in Selection\tCtrl+Shift+F"), _("Find in Selection"));
-		findMenu->Append(MENU_FIND_IN_PROJECT, _("Find in &Project\tCtrl-Alt-F"), _("Find in Project"));
-		findMenu->Append(wxID_REPLACE, _("&Replace\tCtrl+R"), _("Replace"));
-		editMenu->Append(MENU_FIND_AND_REPLACE,  _("&Find and Replace"), findMenu, _("Find and Replace"));
+		findMenu->Append(wxID_FIND, M("Find"));
+		findMenu->Append(MENU_FIND_IN_SEL, M("Find in Selection"));
+		findMenu->Append(MENU_FIND_IN_PROJECT, M("Find in Project"));
+		findMenu->Append(wxID_REPLACE, M("Replace"));
+		editMenu->Append(MENU_FIND_AND_REPLACE, M2("Find and Replace", findMenu));
 
 	editMenu->AppendSeparator();
-	editMenu->Append(MENU_SYNTAX, _("S&yntax"), m_syntaxMenu, _("Syntax"));
+	editMenu->Append(MENU_SYNTAX, M2("Syntax", m_syntaxMenu));
 	editMenu->AppendSeparator();
-	editMenu->Append(MENU_EDIT_THEME, _("Edit &Theme..."), _("Edit Theme"));
-	editMenu->Append(MENU_SETTINGS, _("S&ettings..."), _("Edit Settings"));
+	editMenu->Append(MENU_EDIT_THEME, M("Edit Theme"));
+	editMenu->Append(MENU_SETTINGS, M("Edit Settings"));
 	menuBar->Append(editMenu, _("&Edit"));
 
 	// View menu
 	wxMenu *viewMenu = new wxMenu;
-	viewMenu->Append(MENU_SHOWPROJECT, _("&Project Pane\tCtrl-P"), _("Show Project Pane"), wxITEM_CHECK);
+	viewMenu->Append(MENU_SHOWPROJECT, M("Show Project Pane"), wxITEM_CHECK);
 	//viewMenu->Append(MENU_INCOMMING, _("&Incoming\tF2"), _("Show Incomming Documents"), wxITEM_CHECK);
 	//viewMenu->Check(MENU_INCOMMING, true);
-	viewMenu->Append(MENU_SHOWSYMBOLS, _("&Symbol List\tCtrl+Alt+L"), _("Show Symbol List"), wxITEM_CHECK);
-	viewMenu->Append(MENU_SHOWSNIPPETS, _("&Snippet List\tCtrl+Alt+S"), _("Show Snippet List"), wxITEM_CHECK);
-	viewMenu->Append(MENU_REVHIS, _("&Revision History\tF6"), _("Show Revision History"), wxITEM_CHECK);
+	viewMenu->Append(MENU_SHOWSYMBOLS, M("Show Symbol List"), wxITEM_CHECK);
+	viewMenu->Append(MENU_SHOWSNIPPETS, M("Show Snippet List"), wxITEM_CHECK);
+	viewMenu->Append(MENU_REVHIS, M("Show Revision History"), wxITEM_CHECK);
 	viewMenu->Check(MENU_REVHIS, true);
-	viewMenu->Append(MENU_UNDOHIS, _("&Undo History\tF7"), _("Show Undo History"), wxITEM_CHECK);
+	viewMenu->Append(MENU_UNDOHIS, M("Show Undo History"), wxITEM_CHECK);
 	viewMenu->Check(MENU_UNDOHIS, true);
-	viewMenu->Append(MENU_COMMANDOUTPUT, _("&Command Output\tF12"), _("Show Command Output"), wxITEM_CHECK);
+	viewMenu->Append(MENU_COMMANDOUTPUT, M("Show Command Output"), wxITEM_CHECK);
 	viewMenu->Check(MENU_COMMANDOUTPUT, false);
-	viewMenu->Append(MENU_PREVIEW, _("Web Pre&view\tCtrl+Alt+P"), _("Show Web Preview"), wxITEM_CHECK);
+	viewMenu->Append(MENU_PREVIEW, M("Show Web Preview"), wxITEM_CHECK);
 	viewMenu->AppendSeparator();
-	viewMenu->Append(MENU_LINENUM, _("&Line Numbers"), _("Show Line Numbers"), wxITEM_CHECK);
+	viewMenu->Append(MENU_LINENUM, M("Show Line Numbers"), wxITEM_CHECK);
 	viewMenu->Check(MENU_LINENUM, m_showGutter);
-	viewMenu->Append(MENU_INDENTGUIDE, _("&Indent Guides"), _("Show Indent Guides"), wxITEM_CHECK);
+	viewMenu->Append(MENU_INDENTGUIDE, M("Show Indent Guides"), wxITEM_CHECK);
 	viewMenu->Check(MENU_INDENTGUIDE, m_showIndent);
 	viewMenu->AppendSeparator();
 	m_wrapMenu = new wxMenu;
-		m_wrapMenu->Append(MENU_WRAP_NONE, _("&None"), _("Disable Word Wrap"), wxITEM_CHECK);
+		m_wrapMenu->Append(MENU_WRAP_NONE, M("Disable Word Wrap"), wxITEM_CHECK);
 		m_wrapMenu->Check(MENU_WRAP_NONE, (m_wrapMode == cxWRAP_NONE));
-		m_wrapMenu->Append(MENU_WRAP_NORMAL, _("Nor&mal"), _("Enable Word Wrap"), wxITEM_CHECK);
+		m_wrapMenu->Append(MENU_WRAP_NORMAL, M("Enable Word Wrap"), wxITEM_CHECK);
 		m_wrapMenu->Check(MENU_WRAP_NORMAL, (m_wrapMode == cxWRAP_NORMAL));
-		m_wrapMenu->Append(MENU_WRAP_SMART, _("&Smart"), _("Smart Word Wrap"), wxITEM_CHECK);
+		m_wrapMenu->Append(MENU_WRAP_SMART, M("Smart Word Wrap"), wxITEM_CHECK);
 		m_wrapMenu->Check(MENU_WRAP_SMART, (m_wrapMode == cxWRAP_SMART));
-		viewMenu->Append(MENU_WORDWRAP, _("&Word Wrap"), m_wrapMenu, _("Word Wrap"));
+		viewMenu->Append(MENU_WORDWRAP, M2("Word Wrap", m_wrapMenu));
 	viewMenu->AppendSeparator();
 	//viewMenu->Append(MENU_HL_USERS, _("&Highlight Authors"), _("Highlight authors"), wxITEM_CHECK);
 	//viewMenu->AppendSeparator();
-	viewMenu->Append(MENU_STATUSBAR, _("Show Status&bar"), _("Show Statusbar"), wxITEM_CHECK);
+	viewMenu->Append(MENU_STATUSBAR, M("Show Statusbar"), wxITEM_CHECK);
 	viewMenu->AppendSeparator();
-	viewMenu->Append(MENU_FOLDTOGGLE, _("&Toggle Fold\tF1"), _("Toggle Fold"));
-	viewMenu->Append(MENU_FOLDALL, _("Fold &All\tCtrl-F1"), _("Fold All"));
-	viewMenu->Append(MENU_FOLDOTHERS, _("Fold &Others\tAlt-F1"), _("Fold Others"));
-	viewMenu->Append(MENU_UNFOLDALL, _("&Unfold All\tCtrl-Alt-F1"), _("Unfold &All"));
+	viewMenu->Append(MENU_FOLDTOGGLE, M("Toggle Fold"));
+	viewMenu->Append(MENU_FOLDALL, M("Fold All"));
+	viewMenu->Append(MENU_FOLDOTHERS, M("Fold Others"));
+	viewMenu->Append(MENU_UNFOLDALL, M("Unfold &All"));
 	menuBar->Append(viewMenu, _("&View"));
 
 	// Text menu
 	wxMenu *textMenu = new wxMenu;
 		wxMenu *convMenu = new wxMenu;
-		convMenu->Append(MENU_UPPERCASE, _("to &Uppercase\tCtrl-U"), _("Convert to Uppercase"));
-		convMenu->Append(MENU_LOWERCASE, _("to &Lowercase\tCtrl-Shift-U"), _("Convert to Lowercase"));
-		convMenu->Append(MENU_TITLECASE, _("to &Titlecase\tCtrl-Alt-U"), _("Convert to Titlecase"));
-		convMenu->Append(MENU_REVERSECASE, _("to &Opposite Case\tAlt-G"), _("Convert to Opposite Case"));
+		convMenu->Append(MENU_UPPERCASE, M("Convert to Uppercase"));
+		convMenu->Append(MENU_LOWERCASE, M("Convert to Lowercase"));
+		convMenu->Append(MENU_TITLECASE, M("Convert to Titlecase"));
+		convMenu->Append(MENU_REVERSECASE, M("Convert to Opposite Case"));
 		convMenu->AppendSeparator();
-		convMenu->Append(MENU_REVSEL, _("T&ranspose\tCtrl+T"), _("Transpose text"));
-	textMenu->Append(MENU_TEXTCONV, _("&Convert"), convMenu,  _("Convert Selections"));
+		convMenu->Append(MENU_REVSEL, M("Transpose text"));
+	textMenu->Append(MENU_TEXTCONV, M2("Convert Selections", convMenu));
 	textMenu->AppendSeparator();
-	textMenu->Append(MENU_INDENTLEFT, _("Shift &Left"), _("Shift Left"));
-	textMenu->Append(MENU_INDENTRIGHT, _("Shift &Right"), _("Shift Right"));
+	textMenu->Append(MENU_INDENTLEFT, M("Shift Left"));
+	textMenu->Append(MENU_INDENTRIGHT, M("Shift Right"));
 	textMenu->AppendSeparator();
-	textMenu->Append(MENU_TABSTOSPACES, _("&Tabs to Spaces"), _("Tabs to Spaces"));
-	textMenu->Append(MENU_SPACESTOTABS, _("&Spaces to Tabs"), _("Spaces to Tabs"));
+	textMenu->Append(MENU_TABSTOSPACES, M("Tabs to Spaces"));
+	textMenu->Append(MENU_SPACESTOTABS, M("Spaces to Tabs"));
 	textMenu->AppendSeparator();
-	textMenu->Append(MENU_COMPLETE, _("Complete &Word\tEscape"), _("Complete Word"));
+	textMenu->Append(MENU_COMPLETE, M("Complete Word"));
 	textMenu->AppendSeparator();
-	textMenu->Append(MENU_FILTER, _("&Filter Through Command...\tCtrl-H"), _("Filter Through Command..."));
-	textMenu->Append(MENU_RUN, _("&Run current line/selection\tCtrl-Alt-R"), _("Run current line/selection"));
+	textMenu->Append(MENU_FILTER, M("Filter Through Command..."));
+	textMenu->Append(MENU_RUN, M("Run current line/selection"));
 	menuBar->Append(textMenu, _("&Text"));
 
 	// Navigation menu
 	wxMenu *navMenu = new wxMenu;
-	navMenu->Append(MENU_BOOKMARK_TOGGLE, _("Add &Bookmark\tCtrl-F2"), _("Add Bookmark"));
-	navMenu->Append(MENU_BOOKMARK_NEXT, _("&Next Bookmark\tF2"), _("Go to Next Bookmark"));
-	navMenu->Append(MENU_BOOKMARK_PREVIOUS, _("&Previous Bookmark\tShift-F2"), _("Go to Previous Bookmark"));
-	navMenu->Append(MENU_BOOKMARK_CLEAR, _("&Remove All Bookmarks\tCtrl-Shift-F2"), _("Remove All Bookmarks"));
+	navMenu->Append(MENU_BOOKMARK_TOGGLE, M("Add Bookmark"));
+	navMenu->Append(MENU_BOOKMARK_NEXT, M("Go to Next Bookmark"));
+	navMenu->Append(MENU_BOOKMARK_PREVIOUS, M("Go to Previous Bookmark"));
+	navMenu->Append(MENU_BOOKMARK_CLEAR, M("Remove All Bookmarks"));
 	navMenu->AppendSeparator();
-	navMenu->Append(MENU_GO_NEXT_TAB, _("N&ext Tab\tCtrl-Tab"), _("Next Tab"));
-	navMenu->Append(MENU_GO_PREV_TAB, _("Pre&vious Tab\tCtrl-Shift-Tab"), _("Previous Tab"));
-	navMenu->Append(MENU_TABS_SHOWDROPDOWN, _("Go to &Tab...\tCtrl-0"), _("Go to Tab..."));
-	navMenu->Append(MENU_GO_LAST_TAB, _("L&ast used Tab\tCtrl-Alt-0"), _("Last used Tab"));
+	navMenu->Append(MENU_GO_NEXT_TAB, M("Next Tab"));
+	navMenu->Append(MENU_GO_PREV_TAB, M("Previous Tab"));
+	navMenu->Append(MENU_TABS_SHOWDROPDOWN, M("Go to Tab..."));
+	navMenu->Append(MENU_GO_LAST_TAB, M("Last used Tab"));
 	m_tabMenu = new wxMenu; // Tab submenu (in navigation menu)
-	navMenu->Append(MENU_TABS, _("Ta&bs"), m_tabMenu, _("Tabs"));
+	navMenu->Append(MENU_TABS, M2("Tabs", m_tabMenu));
 	navMenu->AppendSeparator();
-	navMenu->Append(MENU_OPEN_EXT, _("Go to &Header/Source\tCtrl-Alt-Up"), _(""));
-	navMenu->Append(MENU_GOTO_FILE, _("Go to &File...\tCtrl-Shift-T"), _("Go to File..."));
-	navMenu->Append(MENU_GOTO_SYMBOLS, _("Go to &Symbol...\tCtrl-L"), _("Show Symbol List"));
-	navMenu->Append(MENU_GOTO_BRACKET, _("Go to &Matching Bracket\tCtrl-B"), _("Go to Matching Bracket"));
-	navMenu->Append(MENU_GOTO_LINE, _("Go to &Line...\tCtrl-G"), _("Go to Line..."));
+	navMenu->Append(MENU_OPEN_EXT, M("Go to Header/Source"));
+	navMenu->Append(MENU_GOTO_FILE, M("Go to File..."));
+	navMenu->Append(MENU_GOTO_SYMBOLS, M("Show Symbol List"));
+	navMenu->Append(MENU_GOTO_BRACKET, M("Go to Matching Bracket"));
+	navMenu->Append(MENU_GOTO_LINE, M("Go to Line..."));
 	menuBar->Append(navMenu, _("&Navigation"));
 
 	// Document menu
@@ -698,15 +704,15 @@ void EditorFrame::InitMenus() {
 	if (!wxGetApp().IsRegistered()) {
 		// These are deleted again in RemoveRegMenus()
 		// BEWARE of changing their IDs and positions!
-		helpMenu->Append(MENU_BUY, _("&Buy"), _("Buy"));
-		helpMenu->Append(MENU_REGISTER, _("&Enter Registration Code"), _("Enter Registration Code"));
+		helpMenu->Append(MENU_BUY, M("Buy"));
+		helpMenu->Append(MENU_REGISTER, M("Enter Registration Code"));
 		helpMenu->AppendSeparator();
 	}
-	helpMenu->Append(wxID_HELP_CONTENTS, _("&Help Contents"), _("Help Contents"));
-	helpMenu->Append(MENU_HELP_FORUM, _("&Go to Support &Forum"), _("Go to Support Forum"));
-	helpMenu->Append(MENU_WEBSITE, _("Go to &Website"), _("Goto Website"));
+	helpMenu->Append(wxID_HELP_CONTENTS, M("Help Contents"));
+	helpMenu->Append(MENU_HELP_FORUM, M("Go to Support Forum"));
+	helpMenu->Append(MENU_WEBSITE, M("Goto Website"));
 	helpMenu->AppendSeparator();
-	helpMenu->Append(wxID_ABOUT, _("&About e"), _("About"));
+	helpMenu->Append(wxID_ABOUT, M("About"));
 	menuBar->Append(helpMenu, _("&Help"));
 	//helpMenu->AppendSeparator();
 	//helpMenu->Append(MENU_KEYDIAG, _("Key &Diagnostics"), _("Key Diagnostics"), wxITEM_CHECK);
