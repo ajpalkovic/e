@@ -229,12 +229,12 @@ bool eApp::OnInit() {
 			? m_appPath : m_appDataPath;
 
 		m_settings.Load(target_path);
+		KeyboardShortcuts::Instance().Init(target_path);
 	}
 #else
 	m_settings.Load(m_appDataPath);
+	KeyboardShortcuts::Instance().Init(m_appDataPath);
 #endif
-
-	KeyboardShortcuts::Instance().Init();
 
 	// Apply options
 	if (clearState) ClearState();

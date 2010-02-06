@@ -21,6 +21,8 @@
 #include <vector>
 #include <map>
 
+#include "jsonval.h"
+
 using namespace std;
 
 enum KeyboardEvents {
@@ -96,11 +98,14 @@ public:
 	}
 	~KeyboardShortcuts() {}
 	
-	void Init();
+	void Init(wxString path);
 	
-	void LoadDefaultShortcuts();
-	void LoadCustomShortcuts();
+	void LoadDefaultShortcuts(wxString path);
+	void LoadCustomShortcuts(wxString path);
 	void SaveShortcuts();
+
+	void ReadShortcuts(wxString path, wxJSONValue* jsonRoot);
+	void ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, KeyboardShortcutType*>& shortcuts);
 	
 	void RegisterShortcut(wxString name, int id);
 	void SetupShortcutIntMapping();
@@ -117,6 +122,9 @@ private:
 	map<wxString, KeyboardShortcutType*> m_shortcuts;
 	map<wxString, KeyboardShortcutType*> m_defaultShortcuts;
 	multimap<int, KeyboardShortcut*> m_keys;
+	
+	wxString m_path, m_defaultPath;
+	wxJSONValue m_jsonRoot, m_defaultJsonRoot;
 };
 
 #endif // __KEYBOARD_SHORTCUTS_H__

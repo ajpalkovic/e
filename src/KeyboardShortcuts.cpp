@@ -19,6 +19,12 @@
 #include <map>
 #include <algorithm>
 
+#include <wx/wfstream.h>
+#include <wx/regex.h>
+#include "Strings.h"
+#include "jsonreader.h"
+#include "jsonwriter.h"
+
 #include "KeyboardShortcuts.h"
 
 using namespace std;
@@ -33,7 +39,7 @@ KeyboardShortcuts::KeyboardShortcuts() {
 			name: "shortcut name",
 			allowSelection: true,
 			allowVerticalSelection: true,
-			shortcuts: [
+			bindings: [
 				{
 					code: 0,
 					primary: true,
@@ -44,21 +50,111 @@ KeyboardShortcuts::KeyboardShortcuts() {
 		}
 	];
 */
-void KeyboardShortcuts::Init() {
-	LoadDefaultShortcuts();
-	LoadCustomShortcuts();
+void KeyboardShortcuts::Init(wxString path) {
+	LoadDefaultShortcuts(path);
+	LoadCustomShortcuts(path);
 	SetupShortcutIntMapping();
 }
-void KeyboardShortcuts::LoadDefaultShortcuts() {}
-void KeyboardShortcuts::LoadCustomShortcuts() {
-	CreateEventType(m_shortcuts, wxT("Copy"), true, true);
+
+void KeyboardShortcuts::LoadDefaultShortcuts(wxString path) {
+}
+
+void KeyboardShortcuts::LoadCustomShortcuts(wxString path) {
+	m_path = path + wxT("e_keyboard_shortcuts.cfg");
+	ReadShortcuts(m_path, &m_jsonRoot);
+	ParseShortcuts(m_jsonRoot, m_shortcuts);
+
+	/*CreateEventType(m_shortcuts, wxT("Copy"), true, true);
 	CreateEventType(m_shortcuts, wxT("Cut"), false, false);
 	CreateKeyBinding(m_shortcuts, wxT("Copy"), true, 3, true, false, false, false, false);
 	CreateKeyBinding(m_shortcuts, wxT("Copy"), false, 1, false, false, false, false, false);
 
 	CreateKeyBinding(m_shortcuts, wxT("Cut"), false, 13, true, false, false, false, false);
-	CreateKeyBinding(m_shortcuts, wxT("Cut"), true, 11, false, false, false, false, false);
+	CreateKeyBinding(m_shortcuts, wxT("Cut"), true, 11, false, false, false, false, false);*/
 }
+
+void KeyboardShortcuts::ReadShortcuts(wxString path, wxJSONValue* jsonRoot) {	// Open the settings file
+	if (!wxFileExists(path)) return;
+	wxFileInputStream fstream(path);
+	if (!fstream.IsOk()) {
+		wxMessageBox(_("Could not open keyboard settings file."), _("File error"), wxICON_ERROR|wxOK);
+		return;
+	}
+
+	// Parse the JSON contents
+	wxJSONReader reader;
+	const int numErrors = reader.Parse(fstream, jsonRoot);
+	if ( numErrors > 0 )  {
+		// if there are errors in the JSON document, print the errors
+		const wxArrayString& errors = reader.GetErrors();
+		wxString msg = _("Invalid JSON in settings:\n\n") + wxJoin(errors, wxT('\n'), '\0');
+		wxMessageBox(msg, _("Syntax error"), wxICON_ERROR|wxOK);
+		return;
+	}
+}
+
+bool ReadBoolean(wxJSONValue& json, wxString property) {
+	if(!json.HasMember(property)) return false;
+	wxJSONValue value = json.ItemAt(property);
+	if(value.IsBool()) return value.AsBool();
+	if(value.IsInt()) return value.AsInt() != 0;
+	return false;
+}
+
+bool ReadBoolean(wxJSONValue& json, int property) {
+	if(!json.HasMember(property)) return false;
+	wxJSONValue value = json.ItemAt(property);
+	if(value.IsBool()) return value.AsBool();
+	if(value.IsInt()) return value.AsInt() != 0;
+	return false;
+}
+
+void KeyboardShortcuts::ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, KeyboardShortcutType*>& shortcuts) {
+	if (!m_jsonRoot.HasMember(wxT("shortcuts"))) return;
+	wxJSONValue shortcutsArray = jsonRoot.ItemAt(wxT("shortcuts"));
+
+	wxJSONValue shortcut, bindings, binding, modifiers;
+	wxString name;
+	bool allowSelection, allowVerticalSelection;
+	int code;
+	bool primary, ctrl, alt, shift, meta, windows;
+
+	for(int c = 0; c < shortcutsArray.Size(); c++) {
+		shortcut = shortcutsArray.ItemAt(c);
+		if(!shortcut.HasMember(wxT("name"))) continue;
+		name = shortcut.ItemAt(wxT("name")).AsString();
+
+		allowSelection = ReadBoolean(shortcut, wxT("allowSelection"));
+		allowVerticalSelection = ReadBoolean(shortcut, wxT("allowVerticalSelection"));
+
+		CreateEventType(shortcuts, name, allowSelection, allowVerticalSelection);
+
+		if(!shortcut.HasMember(wxT("bindings"))) continue;
+		bindings = shortcut.ItemAt(wxT("bindings"));
+
+		for(int d = 0; d < bindings.Size(); d++) {
+			binding = bindings.ItemAt(d);
+
+			if(!binding.HasMember(wxT("code"))) continue;
+			code = binding.ItemAt(wxT("code")).AsInt();
+
+			primary = ReadBoolean(binding, wxT("primary"));
+
+			ctrl = alt = shift = meta = windows = false;
+			if(binding.HasMember(wxT("modifiers"))) {
+				modifiers = binding.ItemAt(wxT("modifiers"));
+				ctrl = ReadBoolean(modifiers, 0);
+				alt = ReadBoolean(modifiers, 1);
+				shift = ReadBoolean(modifiers, 2);
+				meta = ReadBoolean(modifiers, 3);
+				windows = ReadBoolean(modifiers, 4);
+			}
+
+			CreateKeyBinding(shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
+		}
+	}
+}
+
 void KeyboardShortcuts::SaveShortcuts() {}
 
 void KeyboardShortcuts::RegisterShortcut(wxString name, int id) {
