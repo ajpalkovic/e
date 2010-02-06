@@ -1276,6 +1276,7 @@ void EditorFrame::AddTab(wxWindow* page) {
 	// Notify that we are editing a new document
 	dispatcher.Notify(wxT("WIN_CHANGEDOC"), editorCtrl, GetId());
 	UpdateTabMenu();
+	m_generalSettings.AutoSave();
 }
 
 ITabPage* EditorFrame::GetPage(size_t idx) {
@@ -1959,6 +1960,9 @@ bool EditorFrame::DoOpenFile(const wxString& filepath, wxFontEncoding enc, const
 		if (isBundleItem && editorCtrl->IsEmpty()) DeletePage(m_tabBar->GetSelection());
 		
 		AddTab(page);
+	} else {
+		//if AddTab is not called, then SaveState will never get called.
+		m_generalSettings.AutoSave();
 	}
 	UpdateWindowTitle();
 	editorCtrl->ReDraw();
@@ -2055,6 +2059,7 @@ void EditorFrame::ShowSearch(bool show, bool replace) {
 		editorCtrl->SetFocus();
 	}
 	box->Layout();
+	m_generalSettings.AutoSave();
 }
 
 bool EditorFrame::IsSearching() const { return m_searchPanel->IsShown(); }
@@ -3062,6 +3067,7 @@ void EditorFrame::TogglePane(wxWindow* targetPane, bool showPane) {
 	wxAuiPaneInfo& pane = m_frameManager.GetPane(targetPane);
 	pane.Show(showPane);
 	m_frameManager.Update();
+	m_generalSettings.AutoSave();
 }
 
 void EditorFrame::OnMenuRevisionHistory(wxCommandEvent& event) {
@@ -3621,9 +3627,14 @@ void EditorFrame::SaveSize() {
 }
 
 void EditorFrame::SaveState() {
+
 	// NOTE: When adding settings, remember to also add them to eApp::ClearState()
 	if (!m_needStateSave) return;
 	if (!editorCtrl) return;
+	
+	//This functions makes a lot of calls to change the settings.  It is silly to write them every time, so instead we do it once at the very end.
+	//Moreover, if we enter SaveState via OnIdle, then we shouldn't write the settings to a file, as it gets to be a little too much.
+	m_generalSettings.DontSave();
 
 	if (m_sizeChanged) SaveSize();
 
@@ -3692,6 +3703,9 @@ void EditorFrame::SaveState() {
 
 	// Only save once if window is inactive
 	if (!IsActive()) m_needStateSave = false;
+
+	m_generalSettings.AllowSave();
+	m_generalSettings.AutoSave(); 
 }
 
 void EditorFrame::OnIdle(wxIdleEvent& event) {
@@ -3700,7 +3714,18 @@ void EditorFrame::OnIdle(wxIdleEvent& event) {
 
 	//wxLogDebug(wxT("EditorFrame::OnIdle"));
 
+	//SaveState updates the variables for the e.cfg file.
+	//Computing that and writing the file are somewhat expensive operations.
+	//So, first we disable SaveState from writing the file at all.
+	//Then, if any other function as called m_generalSettings.AutoSave, a boolean will be set to true, which just marks the settings as requiring a save.
+	//It is actually saved in OnIdle so the editor is more responsive.
+	m_generalSettings.DontSave();
 	SaveState();
+	m_generalSettings.AllowSave();
+
+	//Writing the file can be expensive.  Rather than doing it when an action actually occurrs, this does it when the editor is idle so the editor is more responsive.
+	m_generalSettings.DoAutoSave();
+
 	event.Skip();
 }
 
@@ -3761,6 +3786,7 @@ void EditorFrame::OnTabClosed(wxAuiNotebookEvent& WXUNUSED(event)) {
 	if (m_tabBar->GetPageCount() == 0) AddTab();
 
 	UpdateTabMenu();
+	m_generalSettings.AutoSave();
 }
 
 void EditorFrame::OnDoCloseTab(wxCommandEvent& WXUNUSED(event)) {
@@ -3848,6 +3874,8 @@ bool EditorFrame::DeletePage(unsigned int page_id, bool removetab) {
 	}
 
 	if (removetab) m_tabBar->DeletePage(page_id);
+
+	m_generalSettings.AutoSave();
 
 	return true;
 }
