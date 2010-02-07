@@ -153,6 +153,11 @@ void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultShortcut(wxT("Goto Website"), wxT("Go to &Website"));
 	RegisterDefaultShortcut(wxT("About"), wxT("&About e"));
 
+	//These shortcuts come from the OnChar function.
+	//They are a pain, because the keycodes are sometimes ints, and sometimes constants.
+	//They often need to work regardless of whether or not the user is pressing the select/alt keys
+	//Some of them overlap with Menu shortcuts, so we don't want to clobber them.
+	//And you can't use strings in a switch, which means each of these needs to ultimately map to a unique integer at compile time.
 	RegisterDefaultOnCharShortcut(wxT("Copy"), WXK_INSERT, false, false, false, true);
 	RegisterDefaultOnCharShortcut(wxT("Delete the Current Line"), 11, true, false, false, true); // ctrl-k
 	RegisterDefaultOnCharShortcut(wxT("Show Scope Tip"), 16, true, false, false, true); // ctrl-p
