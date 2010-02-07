@@ -110,8 +110,8 @@ public:
 	int TranslateStringToCode(wxString binding);
 
 	void MergeShortcuts();
-	void RegisterShortcut(wxString name, int id);
-	void SetupShortcutIntMapping();
+	void RegisterShortcutIntMapping(wxString name, int id);
+	void SetupShortcutIntMappings();
 	void SaveShortcuts();
 	
 	void CreateEventType(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, wxString menuText, bool allowSelection, bool allowVerticalSelection);

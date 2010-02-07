@@ -56,35 +56,7 @@ void KeyboardShortcuts::Init(wxString path) {
 	LoadCustomShortcuts(path);
 	LoadDefaultShortcuts();
 	MergeShortcuts();
-	SetupShortcutIntMapping();
-}
-
-void KeyboardShortcuts::MergeShortcuts() {
-	map<wxString, KeyboardShortcutType*>::iterator iterator, customIterator;
-	KeyboardShortcutType* type;
-	bool anyMerged = false;
-
-	for(iterator = m_defaultShortcuts.begin(); iterator != m_defaultShortcuts.end(); ++iterator) {
-		type = iterator->second;
-
-		//If this key event, ie "copy" is already defined in m_shortcuts, then there is no need to add it again.
-		customIterator = m_shortcuts.find(type->name);
-		if(customIterator != m_shortcuts.end()) {
-			//wxLogDebug(wxT("Found custom shortcut: %s"), type->name);
-			continue;
-		}
-		wxLogDebug(wxT("Did not find custom shortcut: %s"), type->name);
-
-		anyMerged = true;
-		m_shortcuts.insert(m_shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(type->name, type));
-		for(unsigned int c = 0; c < type->shortcuts.size(); c++) {
-			m_keys.insert(m_keys.begin(), pair<int, KeyboardShortcut*>(type->shortcuts[c]->code, type->shortcuts[c]));
-		}
-	}
-
-	if(anyMerged) {
-		SaveShortcuts();
-	}
+	SetupShortcutIntMappings();
 }
 
 void KeyboardShortcuts::LoadDefaultShortcuts() {
@@ -379,53 +351,81 @@ void KeyboardShortcuts::SaveShortcuts() {
 	writer.Write( root, fstream );
 }
 
-void KeyboardShortcuts::RegisterShortcut(wxString name, int id) {
+void KeyboardShortcuts::MergeShortcuts() {
+	map<wxString, KeyboardShortcutType*>::iterator iterator, customIterator;
+	KeyboardShortcutType* type;
+	bool anyMerged = false;
+
+	for(iterator = m_defaultShortcuts.begin(); iterator != m_defaultShortcuts.end(); ++iterator) {
+		type = iterator->second;
+
+		//If this key event, ie "copy" is already defined in m_shortcuts, then there is no need to add it again.
+		customIterator = m_shortcuts.find(type->name);
+		if(customIterator != m_shortcuts.end()) {
+			//wxLogDebug(wxT("Found custom shortcut: %s"), type->name);
+			continue;
+		}
+		wxLogDebug(wxT("Did not find custom shortcut: %s"), type->name);
+
+		anyMerged = true;
+		m_shortcuts.insert(m_shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(type->name, type));
+		for(unsigned int c = 0; c < type->shortcuts.size(); c++) {
+			m_keys.insert(m_keys.begin(), pair<int, KeyboardShortcut*>(type->shortcuts[c]->code, type->shortcuts[c]));
+		}
+	}
+
+	if(anyMerged) {
+		SaveShortcuts();
+	}
+}
+
+void KeyboardShortcuts::SetupShortcutIntMappings() {
+	//If we ever want to be able to process keyboard events in a switch, we need to be able to map the event type to an int
+	//This function defines that mapping.  There can be keyboard events that do not map to an int, but any event defined here must be listed in m_defaultShortcuts
+	RegisterShortcutIntMapping(wxT("Close Tab"), KEY_EDITOR_CTRL_CLOSE_TAB);
+	
+	RegisterShortcutIntMapping(wxT("Copy"), KEY_EDITOR_CTRL_COPY);
+	RegisterShortcutIntMapping(wxT("Paste"), KEY_EDITOR_CTRL_PASTE);
+	RegisterShortcutIntMapping(wxT("Cut"), KEY_EDITOR_CTRL_CUT);
+	
+	RegisterShortcutIntMapping(wxT("Delete the Current Line"), KEY_EDITOR_CTRL_DELETE_CURRENT_LINE);
+	RegisterShortcutIntMapping(wxT("Show Scope Tip"), KEY_EDITOR_CTRL_SHOW_SCOPE_TIP);
+	RegisterShortcutIntMapping(wxT("Complete Word"), KEY_EDITOR_CTRL_COMPLETION);
+	
+	RegisterShortcutIntMapping(wxT("Move Cursor Word Left"), KEY_EDITOR_CTRL_CURSOR_WORD_LEFT);
+	RegisterShortcutIntMapping(wxT("Move Cursor Word Right"), KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT);
+	
+	RegisterShortcutIntMapping(wxT("Move Editor Up One Line"), KEY_EDITOR_CTRL_CURSOR_UP);
+	RegisterShortcutIntMapping(wxT("Move Editor Down One Line"), KEY_EDITOR_CTRL_CURSOR_DOWN);
+	
+	RegisterShortcutIntMapping(wxT("Move Editor to Top"), KEY_EDITOR_CTRL_TOP);
+	RegisterShortcutIntMapping(wxT("Move Editor to Bottom"), KEY_EDITOR_CTRL_BOTTOM);
+	
+	RegisterShortcutIntMapping(wxT("Move Cursor Left"), KEY_EDITOR_CTRL_LEFT);
+	RegisterShortcutIntMapping(wxT("Move Cursor Right"), KEY_EDITOR_CTRL_RIGHT);
+	RegisterShortcutIntMapping(wxT("Move Cursor Up"), KEY_EDITOR_CTRL_UP);
+	RegisterShortcutIntMapping(wxT("Move Cursor Down"), KEY_EDITOR_CTRL_DOWN);
+	
+	RegisterShortcutIntMapping(wxT("Move to Beginning of Line"), KEY_EDITOR_CTRL_HOME);
+	RegisterShortcutIntMapping(wxT("Move to End of Line"), KEY_EDITOR_CTRL_END);
+	
+	RegisterShortcutIntMapping(wxT("Pageup"), KEY_EDITOR_CTRL_PAGEUP);
+	RegisterShortcutIntMapping(wxT("Pagedown"), KEY_EDITOR_CTRL_PAGEDOWN);
+	
+	RegisterShortcutIntMapping(wxT("Delete"), KEY_EDITOR_CTRL_DELETE);
+	RegisterShortcutIntMapping(wxT("Backspace"), KEY_EDITOR_CTRL_BACKSPACE);
+	RegisterShortcutIntMapping(wxT("New line"), KEY_EDITOR_CTRL_NEWLINE);
+	RegisterShortcutIntMapping(wxT("Tab"), KEY_EDITOR_CTRL_TAB);
+	RegisterShortcutIntMapping(wxT("Escape"), KEY_EDITOR_CTRL_ESCAPE);
+}
+
+void KeyboardShortcuts::RegisterShortcutIntMapping(wxString name, int id) {
 	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = m_shortcuts.find(name);
 	if(iterator == m_shortcuts.end()) return;
 
 	KeyboardShortcutType* existingEvent = iterator->second;
 	existingEvent->id = id;
-}
-
-void KeyboardShortcuts::SetupShortcutIntMapping() {
-	//If we ever want to be able to process keyboard events in a switch, we need to be able to map the event type to an int
-	//This function defines that mapping.  There can be keyboard events that do not map to an int, but any event defined here must be listed in m_defaultShortcuts
-	RegisterShortcut(wxT("Close Tab"), KEY_EDITOR_CTRL_CLOSE_TAB);
-	
-	RegisterShortcut(wxT("Copy"), KEY_EDITOR_CTRL_COPY);
-	RegisterShortcut(wxT("Paste"), KEY_EDITOR_CTRL_PASTE);
-	RegisterShortcut(wxT("Cut"), KEY_EDITOR_CTRL_CUT);
-	
-	RegisterShortcut(wxT("Delete the Current Line"), KEY_EDITOR_CTRL_DELETE_CURRENT_LINE);
-	RegisterShortcut(wxT("Show Scope Tip"), KEY_EDITOR_CTRL_SHOW_SCOPE_TIP);
-	RegisterShortcut(wxT("Complete Word"), KEY_EDITOR_CTRL_COMPLETION);
-	
-	RegisterShortcut(wxT("Move Cursor Word Left"), KEY_EDITOR_CTRL_CURSOR_WORD_LEFT);
-	RegisterShortcut(wxT("Move Cursor Word Right"), KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT);
-	
-	RegisterShortcut(wxT("Move Editor Up One Line"), KEY_EDITOR_CTRL_CURSOR_UP);
-	RegisterShortcut(wxT("Move Editor Down One Line"), KEY_EDITOR_CTRL_CURSOR_DOWN);
-	
-	RegisterShortcut(wxT("Move Editor to Top"), KEY_EDITOR_CTRL_TOP);
-	RegisterShortcut(wxT("Move Editor to Bottom"), KEY_EDITOR_CTRL_BOTTOM);
-	
-	RegisterShortcut(wxT("Move Cursor Left"), KEY_EDITOR_CTRL_LEFT);
-	RegisterShortcut(wxT("Move Cursor Right"), KEY_EDITOR_CTRL_RIGHT);
-	RegisterShortcut(wxT("Move Cursor Up"), KEY_EDITOR_CTRL_UP);
-	RegisterShortcut(wxT("Move Cursor Down"), KEY_EDITOR_CTRL_DOWN);
-	
-	RegisterShortcut(wxT("Move to Beginning of Line"), KEY_EDITOR_CTRL_HOME);
-	RegisterShortcut(wxT("Move to End of Line"), KEY_EDITOR_CTRL_END);
-	
-	RegisterShortcut(wxT("Pageup"), KEY_EDITOR_CTRL_PAGEUP);
-	RegisterShortcut(wxT("Pagedown"), KEY_EDITOR_CTRL_PAGEDOWN);
-	
-	RegisterShortcut(wxT("Delete"), KEY_EDITOR_CTRL_DELETE);
-	RegisterShortcut(wxT("Backspace"), KEY_EDITOR_CTRL_BACKSPACE);
-	RegisterShortcut(wxT("New line"), KEY_EDITOR_CTRL_NEWLINE);
-	RegisterShortcut(wxT("Tab"), KEY_EDITOR_CTRL_TAB);
-	RegisterShortcut(wxT("Escape"), KEY_EDITOR_CTRL_ESCAPE);
 }
 
 //This funciton will be called once for each event type to set basic properties about the event
