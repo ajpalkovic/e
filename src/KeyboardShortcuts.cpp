@@ -346,27 +346,36 @@ void KeyboardShortcuts::RegisterShortcut(wxString name, int id) {
 void KeyboardShortcuts::SetupShortcutIntMapping() {
 	//If we ever want to be able to process keyboard events in a switch, we need to be able to map the event type to an int
 	//This function defines that mapping.  There can be keyboard events that do not map to an int, but any event defined here must be listed in m_defaultShortcuts
+	RegisterShortcut(wxT("Close Tab"), KEY_EDITOR_CTRL_CLOSE_TAB);
+	
 	RegisterShortcut(wxT("Copy"), KEY_EDITOR_CTRL_COPY);
-	RegisterShortcut(wxT("Delete the Current Line"), KEY_EDITOR_CTRL_DELETE_CURRENT_LINE);
-	RegisterShortcut(wxT("Show Scope Tip"), KEY_EDITOR_CTRL_SHOW_SCOPE_TIP);
 	RegisterShortcut(wxT("Paste"), KEY_EDITOR_CTRL_PASTE);
 	RegisterShortcut(wxT("Cut"), KEY_EDITOR_CTRL_CUT);
-	RegisterShortcut(wxT("Show Auto-Complete"), KEY_EDITOR_CTRL_COMPLETION);
+	
+	RegisterShortcut(wxT("Delete the Current Line"), KEY_EDITOR_CTRL_DELETE_CURRENT_LINE);
+	RegisterShortcut(wxT("Show Scope Tip"), KEY_EDITOR_CTRL_SHOW_SCOPE_TIP);
+	RegisterShortcut(wxT("Complete Word"), KEY_EDITOR_CTRL_COMPLETION);
+	
 	RegisterShortcut(wxT("Move Cursor Word Left"), KEY_EDITOR_CTRL_CURSOR_WORD_LEFT);
 	RegisterShortcut(wxT("Move Cursor Word Right"), KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT);
+	
 	RegisterShortcut(wxT("Move Editor Up One Line"), KEY_EDITOR_CTRL_CURSOR_UP);
 	RegisterShortcut(wxT("Move Editor Down One Line"), KEY_EDITOR_CTRL_CURSOR_DOWN);
+	
 	RegisterShortcut(wxT("Move Editor to Top"), KEY_EDITOR_CTRL_TOP);
 	RegisterShortcut(wxT("Move Editor to Bottom"), KEY_EDITOR_CTRL_BOTTOM);
-	RegisterShortcut(wxT("Close Current Tab"), KEY_EDITOR_CTRL_CLOSE_TAB);
+	
 	RegisterShortcut(wxT("Move Cursor Left"), KEY_EDITOR_CTRL_LEFT);
 	RegisterShortcut(wxT("Move Cursor Right"), KEY_EDITOR_CTRL_RIGHT);
 	RegisterShortcut(wxT("Move Cursor Up"), KEY_EDITOR_CTRL_UP);
 	RegisterShortcut(wxT("Move Cursor Down"), KEY_EDITOR_CTRL_DOWN);
+	
 	RegisterShortcut(wxT("Move to Beginning of Line"), KEY_EDITOR_CTRL_HOME);
 	RegisterShortcut(wxT("Move to End of Line"), KEY_EDITOR_CTRL_END);
+	
 	RegisterShortcut(wxT("Pageup"), KEY_EDITOR_CTRL_PAGEUP);
 	RegisterShortcut(wxT("Pagedown"), KEY_EDITOR_CTRL_PAGEDOWN);
+	
 	RegisterShortcut(wxT("Delete"), KEY_EDITOR_CTRL_DELETE);
 	RegisterShortcut(wxT("Backspace"), KEY_EDITOR_CTRL_BACKSPACE);
 	RegisterShortcut(wxT("New line"), KEY_EDITOR_CTRL_NEWLINE);
