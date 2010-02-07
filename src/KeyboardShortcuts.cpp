@@ -53,7 +53,7 @@ KeyboardShortcuts::KeyboardShortcuts() {
 	];
 */
 void KeyboardShortcuts::Init(wxString path) {
-	//LoadCustomShortcuts(path);
+	LoadCustomShortcuts(path);
 	LoadDefaultShortcuts();
 	MergeShortcuts();
 	SetupShortcutIntMapping();
@@ -70,8 +70,10 @@ void KeyboardShortcuts::MergeShortcuts() {
 		//If this key event, ie "copy" is already defined in m_shortcuts, then there is no need to add it again.
 		customIterator = m_shortcuts.find(type->name);
 		if(customIterator != m_shortcuts.end()) {
+			//wxLogDebug(wxT("Found custom shortcut: %s"), type->name);
 			continue;
 		}
+		wxLogDebug(wxT("Did not find custom shortcut: %s"), type->name);
 
 		anyMerged = true;
 		m_shortcuts.insert(m_shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(type->name, type));
@@ -242,28 +244,7 @@ int KeyboardShortcuts::TranslateStringToCode(wxString binding) {
 
 void KeyboardShortcuts::LoadCustomShortcuts(wxString path) {
 	m_path = path + wxT("e_keyboard_shortcuts.cfg");
-	ReadShortcuts(m_path, &m_jsonRoot);
-	ParseShortcuts(m_jsonRoot, m_shortcuts);
-}
-
-void KeyboardShortcuts::ReadShortcuts(wxString path, wxJSONValue* jsonRoot) {	// Open the settings file
-	if (!wxFileExists(path)) return;
-	wxFileInputStream fstream(path);
-	if (!fstream.IsOk()) {
-		wxMessageBox(_("Could not open keyboard settings file."), _("File error"), wxICON_ERROR|wxOK);
-		return;
-	}
-
-	// Parse the JSON contents
-	wxJSONReader reader;
-	const int numErrors = reader.Parse(fstream, jsonRoot);
-	if ( numErrors > 0 )  {
-		// if there are errors in the JSON document, print the errors
-		const wxArrayString& errors = reader.GetErrors();
-		wxString msg = _("Invalid JSON in settings:\n\n") + wxJoin(errors, wxT('\n'), '\0');
-		wxMessageBox(msg, _("Syntax error"), wxICON_ERROR|wxOK);
-		return;
-	}
+	LoadSavedShortcuts();
 }
 
 bool ReadBoolean(wxJSONValue& json, wxString property) {
@@ -282,8 +263,27 @@ bool ReadBoolean(wxJSONValue& json, int property) {
 	return false;
 }
 
-void KeyboardShortcuts::ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, KeyboardShortcutType*>& shortcuts) {
-	if (!m_jsonRoot.HasMember(wxT("shortcuts"))) return;
+void KeyboardShortcuts::LoadSavedShortcuts() {
+	if (!wxFileExists(m_path)) return;
+	wxFileInputStream fstream(m_path);
+	if (!fstream.IsOk()) {
+		wxMessageBox(_("Could not open keyboard settings file."), _("File error"), wxICON_ERROR|wxOK);
+		return;
+	}
+
+	// Parse the JSON contents
+	wxJSONReader reader;
+	wxJSONValue jsonRoot;
+	const int numErrors = reader.Parse(fstream, &jsonRoot);
+	if ( numErrors > 0 )  {
+		// if there are errors in the JSON document, print the errors
+		const wxArrayString& errors = reader.GetErrors();
+		wxString msg = _("Invalid JSON in settings:\n\n") + wxJoin(errors, wxT('\n'), '\0');
+		wxMessageBox(msg, _("Syntax error"), wxICON_ERROR|wxOK);
+		return;
+	}
+	
+	if (!jsonRoot.HasMember(wxT("shortcuts"))) return;
 	wxJSONValue shortcutsArray = jsonRoot.ItemAt(wxT("shortcuts"));
 
 	wxJSONValue shortcut, bindings, binding, modifiers;
@@ -303,7 +303,7 @@ void KeyboardShortcuts::ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, Keyb
 		allowSelection = ReadBoolean(shortcut, wxT("allowSelection"));
 		allowVerticalSelection = ReadBoolean(shortcut, wxT("allowVerticalSelection"));
 
-		CreateEventType(shortcuts, name, menuText, allowSelection, allowVerticalSelection);
+		CreateEventType(m_shortcuts, name, menuText, allowSelection, allowVerticalSelection);
 
 		if(!shortcut.HasMember(wxT("bindings"))) continue;
 		bindings = shortcut.ItemAt(wxT("bindings"));
@@ -326,13 +326,58 @@ void KeyboardShortcuts::ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, Keyb
 				windows = ReadBoolean(modifiers, 4);
 			}
 
-			KeyboardShortcut* keyBinding = CreateKeyBinding(shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
+			KeyboardShortcut* keyBinding = CreateKeyBinding(m_shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
 			m_keys.insert(m_keys.begin(), pair<int, KeyboardShortcut*>(code, keyBinding));
 		}
 	}
 }
 
-void KeyboardShortcuts::SaveShortcuts() {}
+void KeyboardShortcuts::SaveShortcuts() {
+	wxASSERT(!m_path.empty());
+	
+	// Open or create the settings file
+	wxFileOutputStream fstream(m_path);
+	if (!fstream.IsOk()) {
+		wxMessageBox(_("Could not open settings file."), _("File error"), wxICON_ERROR|wxOK);
+		return;
+	}
+	
+	wxJSONValue root, shortcuts;
+	
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
+	KeyboardShortcutType* type;
+	KeyboardShortcut* binding;
+
+    int index = 0;
+	for(iterator = m_defaultShortcuts.begin(); iterator != m_defaultShortcuts.end(); ++iterator) {
+		type = iterator->second;
+		
+		shortcuts[index][wxT("name")] = type->name;
+		shortcuts[index][wxT("menuText")] = type->menuText;
+		shortcuts[index][wxT("allowSelection")] = type->allowSelection;
+		shortcuts[index][wxT("allowVerticalSelection")] = type->allowVerticalSelection;
+
+		for(unsigned int c = 0; c < type->shortcuts.size(); c++) {
+			binding = type->shortcuts[c];
+			
+			shortcuts[index][wxT("bindings")][c][wxT("code")] = binding->code;
+			shortcuts[index][wxT("bindings")][c][wxT("primary")] = binding->primary;
+			
+			shortcuts[index][wxT("bindings")][c][wxT("modifiers")].Append(binding->ctrl);
+			shortcuts[index][wxT("bindings")][c][wxT("modifiers")].Append(binding->alt);
+			shortcuts[index][wxT("bindings")][c][wxT("modifiers")].Append(binding->shift);
+			shortcuts[index][wxT("bindings")][c][wxT("modifiers")].Append(binding->meta); 
+			shortcuts[index][wxT("bindings")][c][wxT("modifiers")].Append(binding->windows);
+		}
+		
+		index++;
+	}
+
+	root[wxT("shortcuts")] = shortcuts;
+
+	wxJSONWriter writer(wxJSONWRITER_STYLED);
+	writer.Write( root, fstream );
+}
 
 void KeyboardShortcuts::RegisterShortcut(wxString name, int id) {
 	map<wxString, KeyboardShortcutType*>::iterator iterator;

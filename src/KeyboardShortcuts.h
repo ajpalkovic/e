@@ -59,11 +59,11 @@ class KeyboardShortcutType;
 
 struct KeyboardShortcut {
 	int code;
-	bool ctrl, shift, alt, meta, windows;
+	bool ctrl, shift, alt, meta, windows, primary;
 	KeyboardShortcutType* type;
 	
 	KeyboardShortcut(KeyboardShortcutType* type, int code, bool ctrl, bool shift, bool alt, bool meta, bool windows) : 
-	type(type), code(code), ctrl(ctrl), shift(shift), alt(alt), meta(meta), windows(windows) {}
+	type(type), code(code), ctrl(ctrl), shift(shift), alt(alt), meta(meta), windows(windows), primary(false) {}
 };
 
 class KeyboardShortcutType {
@@ -82,6 +82,7 @@ public:
 	void AddPrimaryShortcut(KeyboardShortcut* shortcut) {
 		hasPrimary = true;
 		primaryShortcut = shortcut;
+		shortcut->primary = true;
 		AddShortcut(shortcut);
 	}
 };
@@ -100,21 +101,18 @@ public:
 	
 	void Init(wxString path);
 	
-	void LoadDefaultShortcuts();
 	void LoadCustomShortcuts(wxString path);
-	void SaveShortcuts();
-	void MergeShortcuts();
+	void LoadSavedShortcuts();
 
+	void LoadDefaultShortcuts();
 	void RegisterDefaultShortcut(wxString name, wxString menuText, bool allowSelection=false, bool allowVerticalSelection=false);
 	void RegisterDefaultShortcutAndBinding(wxString name, wxString menuText, wxString binding, bool allowSelection=false, bool allowVerticalSelection=false);
-
 	int TranslateStringToCode(wxString binding);
 
-	void ReadShortcuts(wxString path, wxJSONValue* jsonRoot);
-	void ParseShortcuts(wxJSONValue& jsonRoot, map<wxString, KeyboardShortcutType*>& shortcuts);
-	
+	void MergeShortcuts();
 	void RegisterShortcut(wxString name, int id);
 	void SetupShortcutIntMapping();
+	void SaveShortcuts();
 	
 	void CreateEventType(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, wxString menuText, bool allowSelection, bool allowVerticalSelection);
 	KeyboardShortcut* CreateKeyBinding(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows);
@@ -133,7 +131,6 @@ private:
 	multimap<int, KeyboardShortcut*> m_keys;
 	
 	wxString m_path;
-	wxJSONValue m_jsonRoot;
 };
 
 static int IsNumberedAccelKey(const wxString& str, const wxChar *prefix, wxKeyCode prefixCode, unsigned first, unsigned last);
