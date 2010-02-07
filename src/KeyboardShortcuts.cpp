@@ -152,8 +152,54 @@ void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultShortcut(wxT("Go to Support Forum"), wxT("&Go to Support &Forum"));
 	RegisterDefaultShortcut(wxT("Goto Website"), wxT("Go to &Website"));
 	RegisterDefaultShortcut(wxT("About"), wxT("&About e"));
+
+	RegisterDefaultOnCharShortcut(wxT("Copy"), WXK_INSERT, false, false, false, true);
+	RegisterDefaultOnCharShortcut(wxT("Delete the Current Line"), 11, true, false, false, true); // ctrl-k
+	RegisterDefaultOnCharShortcut(wxT("Show Scope Tip"), 16, true, false, false, true); // ctrl-p
+	RegisterDefaultOnCharShortcut(wxT("Complete Word"), WXK_SPACE, false, false, false, true); // ctrl-space
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Word Left"), WXK_LEFT, true, true, true, true); // ctrl ->
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Word Right"), WXK_RIGHT, true, true, true, true); // ctrl <-
+	RegisterDefaultOnCharShortcut(wxT("Move Editor Up One Line"), WXK_UP, true, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Editor Down One Line"), WXK_DOWN, true, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Editor to Top"), WXK_HOME, true, true, false, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Editor to Bottom"), WXK_END, true, true, false, true);
+	RegisterDefaultOnCharShortcut(wxT("Close Tab"), WXK_F4, false, false, false, true);
+
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Left"), WXK_LEFT, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Left"), WXK_NUMPAD_LEFT, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Right"), WXK_RIGHT, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Right"), WXK_NUMPAD_RIGHT, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Up"), WXK_UP, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Up"), WXK_NUMPAD_UP, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Down"), WXK_DOWN, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move Cursor Down"), WXK_NUMPAD_DOWN, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Move to Beginning of Line"), WXK_HOME, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Move to Beginning of Line"), WXK_NUMPAD_HOME, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Move to Beginning of Line"), WXK_NUMPAD_BEGIN, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Move to End of Line"), WXK_END, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Move to End of Line"), WXK_NUMPAD_END, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Pageup"), WXK_PAGEUP, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Pageup"), WXK_NUMPAD_PAGEUP, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Pagedown"), WXK_PAGEDOWN, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Pagedown"), WXK_NUMPAD_PAGEDOWN, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Paste"), WXK_INSERT, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Paste"), WXK_NUMPAD_INSERT, false, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_DELETE, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_NUMPAD_DELETE, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_DELETE, true, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_NUMPAD_DELETE, false, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Backspace"), WXK_BACK, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Newline"), WXK_RETURN, true, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Newline"), WXK_NUMPAD_ENTER, false, true, true);
+	RegisterDefaultOnCharShortcut(wxT("Tab"), WXK_TAB, true, false, false);
+	RegisterDefaultOnCharShortcut(wxT("Tab"), WXK_NUMPAD_TAB, false, false, false);
+	RegisterDefaultOnCharShortcut(wxT("Escape"), WXK_ESCAPE, true, true, true);
 }
 
+void KeyboardShortcuts::RegisterDefaultOnCharShortcut(wxString name, int code, bool primary, bool allowSelection, bool allowVerticalSelection, bool ctrl, bool alt, bool shift, bool meta, bool windows) {
+    CreateEventType(m_defaultShortcuts, name, name, allowSelection, allowVerticalSelection);
+    CreateKeyBinding(m_shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
+}
 void KeyboardShortcuts::RegisterDefaultShortcut(wxString name, wxString menuText, bool allowSelection, bool allowVerticalSelection) {
 	CreateEventType(m_defaultShortcuts, name, menuText, allowSelection, allowVerticalSelection);
 }
@@ -298,8 +344,7 @@ void KeyboardShortcuts::LoadSavedShortcuts() {
 				windows = ReadBoolean(modifiers, 4);
 			}
 
-			KeyboardShortcut* keyBinding = CreateKeyBinding(m_shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
-			m_keys.insert(m_keys.begin(), pair<int, KeyboardShortcut*>(code, keyBinding));
+			CreateKeyBinding(m_shortcuts, name, primary, code, ctrl, alt, shift, meta, windows);
 		}
 	}
 }
@@ -369,6 +414,11 @@ void KeyboardShortcuts::MergeShortcuts() {
 
 		anyMerged = true;
 		m_shortcuts.insert(m_shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(type->name, type));
+	}
+
+	//Create a single hashtable of all of the key codes for faster lookup when a key is pressed.
+	for(iterator = m_shortcuts.begin(); iterator != m_shortcuts.end(); ++iterator) {
+		type = iterator->second;
 		for(unsigned int c = 0; c < type->shortcuts.size(); c++) {
 			m_keys.insert(m_keys.begin(), pair<int, KeyboardShortcut*>(type->shortcuts[c]->code, type->shortcuts[c]));
 		}

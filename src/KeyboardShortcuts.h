@@ -107,6 +107,7 @@ public:
 	void LoadDefaultShortcuts();
 	void RegisterDefaultShortcut(wxString name, wxString menuText, bool allowSelection=false, bool allowVerticalSelection=false);
 	void RegisterDefaultShortcutAndBinding(wxString name, wxString menuText, wxString binding, bool allowSelection=false, bool allowVerticalSelection=false);
+	void RegisterDefaultOnCharShortcut(wxString name, int code, bool primary, bool allowSelection, bool allowVerticalSelection, bool ctrl=false, bool alt=false, bool shift=false, bool meta=false, bool windows=false);
 	int TranslateStringToCode(wxString binding);
 
 	void MergeShortcuts();
