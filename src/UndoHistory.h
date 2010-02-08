@@ -31,6 +31,7 @@ public:
 	UndoHistory(CatalystWrapper& cw, IFrameUndoPane* parentFrame, int win_id, wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
 	~UndoHistory();
 
+	void SetEditorCtrl(EditorCtrl* ctrl);
 	void Clear();
 	void SetDocument(const doc_id& di, bool doCenter=false);
 
@@ -96,8 +97,9 @@ private:
 	int m_selectedNode;
 	int m_lineHeight;
 	int m_treeHeight;
-	int m_scrollPos;
-	int m_oldScrollPos;
+	int m_treeWidth;
+	int m_verticalScrollPos, m_horizontalScrollPos;
+	int m_oldVerticalScrollPos, m_oldHorizontalScrollPos;
 	bool m_isScrolling;
 
 	int m_popupItem;

@@ -6201,7 +6201,7 @@ void EditorCtrl::Redo() {
 	}
 	else if (childlist.size() > 1) {
 		// Show dialog with undo history so user can choose branch
-		RedoDlg dlg(this, m_catalyst, GetId(), currentDoc);
+		RedoDlg dlg(this, &m_parentFrame, m_catalyst, GetId(), currentDoc);
 	}
 }
 
