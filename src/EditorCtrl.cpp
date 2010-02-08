@@ -157,6 +157,7 @@ EditorCtrl::EditorCtrl(const int page_id, CatalystWrapper& cw, wxBitmap& bitmap,
 
 	bitmap(bitmap), 
 	m_parentFrame(parentFrame), 
+	m_keyboardShortcuts(KeyboardShortcuts::Instance()),
 
 	m_syntaxHandler(m_parentFrame.GetSyntaxHandler()),
 	m_theme(m_syntaxHandler.GetTheme()),
@@ -207,6 +208,7 @@ EditorCtrl::EditorCtrl(const doc_id di, const wxString& mirrorPath, CatalystWrap
 
 	bitmap(bitmap), 
 	m_parentFrame(parentFrame),
+	m_keyboardShortcuts(KeyboardShortcuts::Instance()),
 
 	m_syntaxHandler(m_parentFrame.GetSyntaxHandler()),
 	m_theme(m_syntaxHandler.GetTheme()),
@@ -271,6 +273,7 @@ EditorCtrl::EditorCtrl(CatalystWrapper& cw, wxBitmap& bitmap, wxWindow* parent, 
 
 	bitmap(bitmap), 
 	m_parentFrame(parentFrame), 
+	m_keyboardShortcuts(KeyboardShortcuts::Instance()),
 
 	m_syntaxHandler(m_parentFrame.GetSyntaxHandler()), 
 	m_theme(m_syntaxHandler.GetTheme()),
@@ -7021,20 +7024,20 @@ void EditorCtrl::OnMouseRightDown(wxMouseEvent& event) {
 	DrawLayout();
 
 	wxMenu contextMenu;
-	contextMenu.Append(wxID_CUT, _("&Cut\tCtrl+X"), _("Cut"));
-	contextMenu.Append(wxID_COPY, _("&Copy\tCtrl+C"), _("Copy"));
-	contextMenu.Append(wxID_PASTE, _("&Paste\tCtrl+V"), _("Paste"));
+	contextMenu.Append(wxID_CUT, M("Cut"));
+	contextMenu.Append(wxID_COPY, M("Copy"));
+	contextMenu.Append(wxID_PASTE, M("Paste"));
 	contextMenu.AppendSeparator();
 	wxMenu* selectMenu = new wxMenu;
-		selectMenu->Append(wxID_SELECTALL, _("&All\tCtrl+A"), _("Select All"));
-		selectMenu->Append(EditorFrame::MENU_SELECTWORD, _("&Word\tCtrl+Shift+W"), _("Select Word"));
-		selectMenu->Append(EditorFrame::MENU_SELECTLINE, _("&Line\tCtrl+Shift+L"), _("Select Line"));
-		selectMenu->Append(EditorFrame::MENU_SELECTSCOPE, _("&Current Scope\tCtrl+Shift+Space"), _("Select Current Scope"));
-		selectMenu->Append(EditorFrame::MENU_SELECTFOLD, _("Current &Fold\tShift-F1"), _("Select Current Fold"));
-		contextMenu.Append(EditorFrame::MENU_SELECT, _("&Select"), selectMenu,  _("Select"));
+		selectMenu->Append(wxID_SELECTALL, M("Select All"));
+		selectMenu->Append(EditorFrame::MENU_SELECTWORD, M("Select Word"));
+		selectMenu->Append(EditorFrame::MENU_SELECTLINE, M("Select Line"));
+		selectMenu->Append(EditorFrame::MENU_SELECTSCOPE, M("Select Current Scope"));
+		selectMenu->Append(EditorFrame::MENU_SELECTFOLD, M("Select Current Fold"));
+		contextMenu.Append(EditorFrame::MENU_SELECT, M2("Select", selectMenu));
 	contextMenu.AppendSeparator();
-	contextMenu.Append(wxID_UNDO, _("&Undo\tCtrl+Z"), _("Undo"));
-	contextMenu.Append(wxID_REDO, _("&Redo\tCtrl+Y"), _("Redo"));
+	contextMenu.Append(wxID_UNDO, M("Undo"));
+	contextMenu.Append(wxID_REDO, M("Redo"));
 
 	if (!inSelection) {
 		contextMenu.Enable(wxID_CUT, false);

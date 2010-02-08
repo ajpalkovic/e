@@ -35,6 +35,7 @@
 #include "DetectTripleClicks.h"
 #include "AutoPairs.h"
 #include "Bookmarks.h"
+#include "KeyboardShortcuts.h"
 
 #include "IFoldingEditor.h"
 #include "IEditorDoAction.h"
@@ -522,6 +523,7 @@ protected:
 
 	wxBitmap& bitmap;
 	EditorFrame& m_parentFrame;
+	KeyboardShortcuts& m_keyboardShortcuts;
 
 	TmSyntaxHandler& m_syntaxHandler;
 	const tmTheme& m_theme;

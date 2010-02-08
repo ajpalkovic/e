@@ -25,6 +25,10 @@
 
 using namespace std;
 
+//A simple macro for looking up the keyboard shortcut for the menus
+#define M(name) m_keyboardShortcuts.GetEventMenuText(wxT(name)), wxT(name)
+#define M2(name, menu) m_keyboardShortcuts.GetEventMenuText(wxT(name)), menu, wxT(name)
+
 enum KeyboardEvents {
 	KEY_EDITOR_CTRL_COPY,
 	KEY_EDITOR_CTRL_DELETE_CURRENT_LINE,

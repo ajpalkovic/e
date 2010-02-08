@@ -77,10 +77,6 @@
 #include <wx/msw/registry.h>
 #endif
 
-//A simple macro for looking up the keyboard shortcut for the menus
-#define M(name) m_keyboardShortcuts.GetEventMenuText(wxT(name)), wxT(name)
-#define M2(name, menu) m_keyboardShortcuts.GetEventMenuText(wxT(name)), menu, wxT(name)
-
 
 class FrameDropTarget : public wxFileDropTarget {
 public:
@@ -844,17 +840,17 @@ wxMenu* EditorFrame::GetBundleMenu() {
 	m_settings.GetSettingBool(wxT("bundleDebug"), enableDebug);
 
 	wxMenu *funcMenu = new wxMenu;
-	funcMenu->Append(MENU_EDIT_BUNDLES, _("Show Bundle &Editor\tCtrl-Shift-B"), _("Show Bundle Editor"), wxITEM_CHECK);
-	funcMenu->Append(MENU_MANAGE_BUNDLES, _("&Manage Bundles"), _("Show Bundle Manager"));
+	funcMenu->Append(MENU_EDIT_BUNDLES, M("Show Bundle Editor"), wxITEM_CHECK);
+	funcMenu->Append(MENU_MANAGE_BUNDLES, M("Show Bundle Manager"));
 	funcMenu->AppendSeparator();
-	funcMenu->Append(MENU_DEBUG_BUNDLES, _("Enable &Debug Mode"), _("Enable Debug Mode"), wxITEM_CHECK);
+	funcMenu->Append(MENU_DEBUG_BUNDLES, M("Enable Debug Mode"), wxITEM_CHECK);
 	funcMenu->Check(MENU_DEBUG_BUNDLES, enableDebug);
-	funcMenu->Append(MENU_RELOAD_BUNDLES, _("&Reload Bundles"), _("Reload Bundles"));
+	funcMenu->Append(MENU_RELOAD_BUNDLES, M("Reload Bundles"));
 
 	bundleMenu->PrependSeparator();
-	bundleMenu->Prepend(MENU_BUNDLE_FUNCTIONS, _("&Edit Bundles"), funcMenu,  _("Edit Bundles"));
+	bundleMenu->Prepend(MENU_BUNDLE_FUNCTIONS, M2("Edit Bundles", funcMenu));
 	bundleMenu->PrependSeparator();
-	bundleMenu->Prepend(MENU_FINDCMD, _("&Select Bundle Item...\tCtrl-Alt-T"), _("Select Bundle Item..."));
+	bundleMenu->Prepend(MENU_FINDCMD, M("Select Bundle Item..."));
 
 	return bundleMenu;
 }
@@ -892,11 +888,11 @@ void EditorFrame::ResetSyntaxMenu() {
 void EditorFrame::CreateEncodingMenu(wxMenu& menu) const {
 	// "Line endings" submenu (in "Save format" menu)
 	wxMenu* lineendMenu = new wxMenu;
-	lineendMenu->Append(MENU_EOL_DOS, _("&DOS/Windows (CR LF)"), _("DOS/Windows (CR LF)"), wxITEM_CHECK);
-	lineendMenu->Append(MENU_EOL_UNIX, _("&Unix (LF)"), _("Unix (LF)"), wxITEM_CHECK);
-	lineendMenu->Append(MENU_EOL_MAC, _("&Mac (CR)"), _("Mac (CR)"), wxITEM_CHECK);
+	lineendMenu->Append(MENU_EOL_DOS, M("DOS/Windows (CR LF)"), wxITEM_CHECK);
+	lineendMenu->Append(MENU_EOL_UNIX, M("Unix (LF)"), wxITEM_CHECK);
+	lineendMenu->Append(MENU_EOL_MAC, M("Mac (CR)"), wxITEM_CHECK);
 	lineendMenu->AppendSeparator();
-	lineendMenu->Append(MENU_EOL_NATIVE, _("&Always save native"), _("Always save native"), wxITEM_CHECK);
+	lineendMenu->Append(MENU_EOL_NATIVE, M("Always save native"), wxITEM_CHECK);
 
 	// Encoding (in "Save format" menu) & Import submenu
 	wxMenu* encodingMenu = new wxMenu;
@@ -913,7 +909,7 @@ void EditorFrame::CreateEncodingMenu(wxMenu& menu) const {
 	// Build the menu
 	menu.Append(MENU_LINEEND, _("&Line Endings"), lineendMenu, _("Line Endings"));
 	menu.Append(MENU_ENCODING, _("&Encoding"), encodingMenu, _("Encoding"));
-	menu.Append(MENU_BOM, _("&Byte Order Marker (BOM)"), _("Byte Order Marker (BOM)"), wxITEM_CHECK);
+	menu.Append(MENU_BOM, M("Byte Order Marker (BOM)"), wxITEM_CHECK);
 }
 
 void EditorFrame::UpdateEncodingMenu(wxMenu& menu) const {
@@ -2318,13 +2314,13 @@ void EditorFrame::OnNotebookContextMenu(wxAuiNotebookEvent& event) {
 
 	// Create the popup menu
 	wxMenu tabPopupMenu;
-	tabPopupMenu.Append(MENU_TABS_NEW, _("&New Tab"), _("New Tab"));
+	tabPopupMenu.Append(MENU_TABS_NEW, M("New Tab"));
 	tabPopupMenu.AppendSeparator();
-	tabPopupMenu.Append(MENU_TABS_CLOSE, _("&Close Tab\tCtrl-W"), _("Close Tab"));
-	tabPopupMenu.Append(MENU_TABS_CLOSE_OTHER, _("Close &other Tabs\tCtrl-Alt-W"), _("Close other Tabs"));
-	tabPopupMenu.Append(MENU_TABS_CLOSE_ALL, _("Close &all Tabs"), _("Close all Tabs"));
+	tabPopupMenu.Append(MENU_TABS_CLOSE, M("Close Tab"));
+	tabPopupMenu.Append(MENU_TABS_CLOSE_OTHER, M("Close other Tabs"));
+	tabPopupMenu.Append(MENU_TABS_CLOSE_ALL, M("Close all Tabs"));
 	tabPopupMenu.AppendSeparator();
-	tabPopupMenu.Append(MENU_TABS_COPY_PATH, _("Copy &Path to Clipboard"), _("Copy Path to Clipboard"));
+	tabPopupMenu.Append(MENU_TABS_COPY_PATH, M("Copy Path to Clipboard"));
 
 	// Disable copy path if no path in tab
 	const EditorCtrl* ec = GetEditorCtrlFromPage(m_contextTab);

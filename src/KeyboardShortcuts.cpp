@@ -61,6 +61,7 @@ void KeyboardShortcuts::Init(wxString path) {
 
 void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultShortcutAndBinding(wxT("New File"), wxT("&New"), wxT("Ctrl+N"));
+	RegisterDefaultShortcutAndBinding(wxT("New Tab"), wxT("&New Tab"), wxT("Ctrl+N"));
 	RegisterDefaultShortcutAndBinding(wxT("Open File"), wxT("&Open..."), wxT("Ctrl+O"));
 	RegisterDefaultShortcut(wxT("Compare..."), wxT("&Compare..."));
 	RegisterDefaultShortcut(wxT("Open New Window"), wxT("New Window"));
@@ -163,6 +164,21 @@ void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultShortcutAndBinding(wxT("Open Tab 7"), wxT("Open &Tab 7"), wxT("Ctrl+7"));
 	RegisterDefaultShortcutAndBinding(wxT("Open Tab 8"), wxT("Open &Tab 8"), wxT("Ctrl+8"));
 	RegisterDefaultShortcutAndBinding(wxT("Open Tab 9"), wxT("Open &Tab 9"), wxT("Ctrl+9"));
+	
+	RegisterDefaultShortcutAndBinding(wxT("Show Bundle Editor"), wxT("Show Bundle &Editor"), wxT("Ctrl+Shift+B"));
+	RegisterDefaultShortcut(wxT("Show Bundle Manager"), wxT("&Manage Bundles"));
+	RegisterDefaultShortcut(wxT("Enable Debug Mode"), wxT("Enable &Debug Mode"));
+	RegisterDefaultShortcut(wxT("Reload Bundles"), wxT("&Reload Bundles"));
+	RegisterDefaultShortcut(wxT("Edit Bundles"), wxT("&Edit Bundles"));
+	RegisterDefaultShortcutAndBinding(wxT("Select Bundle Item..."), wxT("&Select Bundle Item..."), wxT("Ctrl+Alt+T"));
+	
+	RegisterDefaultShortcut(wxT("DOS/Windows (CR LF)"), wxT("&DOS/Windows (CR LF)"));
+	RegisterDefaultShortcut(wxT("Unix (LF)"), wxT("&Unix (LF)"));
+	RegisterDefaultShortcut(wxT("Mac (CR)"), wxT("&Mac (CR)"));
+	RegisterDefaultShortcut(wxT("Always save native"), wxT("&Always save native"));
+	RegisterDefaultShortcut(wxT("Byte Order Marker (BOM)"), wxT("&Byte Order Marker (BOM)"));
+	
+	RegisterDefaultShortcut(wxT("Copy Path to Clipboard"), wxT("Copy &Path to Clipboard"));
 
 	//These shortcuts come from the OnChar function.
 	//They are a pain, because the keycodes are sometimes ints, and sometimes constants.
@@ -198,7 +214,7 @@ void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultOnCharShortcut(wxT("Pageup"), WXK_NUMPAD_PAGEUP, false, true, false);
 	RegisterDefaultOnCharShortcut(wxT("Pagedown"), WXK_PAGEDOWN, true, true, false);
 	RegisterDefaultOnCharShortcut(wxT("Pagedown"), WXK_NUMPAD_PAGEDOWN, false, true, false);
-	RegisterDefaultOnCharShortcut(wxT("Paste"), WXK_INSERT, true, true, false);
+	RegisterDefaultOnCharShortcut(wxT("Paste"), WXK_INSERT, false, true, false);
 	RegisterDefaultOnCharShortcut(wxT("Paste"), WXK_NUMPAD_INSERT, false, true, false);
 	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_DELETE, true, true, true);
 	RegisterDefaultOnCharShortcut(wxT("Delete"), WXK_NUMPAD_DELETE, false, true, true);
