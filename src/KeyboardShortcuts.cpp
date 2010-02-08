@@ -152,6 +152,17 @@ void KeyboardShortcuts::LoadDefaultShortcuts() {
 	RegisterDefaultShortcut(wxT("Go to Support Forum"), wxT("&Go to Support &Forum"));
 	RegisterDefaultShortcut(wxT("Goto Website"), wxT("Go to &Website"));
 	RegisterDefaultShortcut(wxT("About"), wxT("&About e"));
+	
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 0"), wxT("Open &Tab 0"), wxT("Ctrl+0"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 1"), wxT("Open &Tab 1"), wxT("Ctrl+1"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 2"), wxT("Open &Tab 2"), wxT("Ctrl+2"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 3"), wxT("Open &Tab 3"), wxT("Ctrl+3"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 4"), wxT("Open &Tab 4"), wxT("Ctrl+4"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 5"), wxT("Open &Tab 5"), wxT("Ctrl+5"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 6"), wxT("Open &Tab 6"), wxT("Ctrl+6"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 7"), wxT("Open &Tab 7"), wxT("Ctrl+7"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 8"), wxT("Open &Tab 8"), wxT("Ctrl+8"));
+	RegisterDefaultShortcutAndBinding(wxT("Open Tab 9"), wxT("Open &Tab 9"), wxT("Ctrl+9"));
 
 	//These shortcuts come from the OnChar function.
 	//They are a pain, because the keycodes are sometimes ints, and sometimes constants.

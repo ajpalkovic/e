@@ -2867,8 +2867,9 @@ void EditorFrame::UpdateTabMenu() {
 		wxString label = ec->GetName();
 		if (label.empty()) label = _("Untitled");
 
-		if (i < 8) label += wxString::Format(wxT("\tCtrl-%u"), i+1);
-		else if (i == tabcount-1) label += wxT("\tCtrl-9");
+		label += wxT("\t");
+		if (i < 8) label += KeyboardShortcuts::Instance().GetEventKeyBinding(wxString::Format(wxT("Open Tab %u"), i+1));
+		else if (i == tabcount-1) label += KeyboardShortcuts::Instance().GetEventKeyBinding(wxT("Open Tab 9"));
 
 		m_tabMenu->AppendCheckItem(40000 + i, label);
 	}
