@@ -286,6 +286,7 @@ bool eApp::OnInit() {
 	}
 
 	m_settings.SetApp(this);
+	m_settings.AllowSave();
 
     return true;
 }
