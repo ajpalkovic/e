@@ -600,6 +600,47 @@ bool KeyboardShortcuts::IsSpecialKeyDown(int key, wxKeyEvent& event) {
 	return false;
 }
 
+bool KeyboardShortcuts::IsSelectDown(wxMouseEvent& event) {
+	return IsSpecialKeyDown(selectKey, event);
+}
+
+bool KeyboardShortcuts::IsVerticalSelectDown(wxMouseEvent& event) {
+	return IsSpecialKeyDown(verticalSelectKey, event);
+}
+
+bool KeyboardShortcuts::IsSpecialKeyDown(int key, wxMouseEvent& event) {
+	switch(key) {
+		case 1: return event.ControlDown();
+		case 2: return event.AltDown();
+		case 4: return event.MetaDown();
+		case 8: return event.ShiftDown();
+	}
+
+	//shenanigans
+	return false;
+}
+
+bool KeyboardShortcuts::IsSelectDown() {
+	return IsSpecialKeyDown(selectKey);
+}
+
+bool KeyboardShortcuts::IsVerticalSelectDown() {
+	return IsSpecialKeyDown(verticalSelectKey);
+}
+
+bool KeyboardShortcuts::IsSpecialKeyDown(int key) {
+	switch(key) {
+		case 1: return wxGetKeyState(WXK_CONTROL);
+		case 2: return wxGetKeyState(WXK_ALT);
+		case 4: return wxGetKeyState(WXK_SHIFT);
+		//case 8: return wxGetKeyState(WXK_META);
+		case 16: return wxGetKeyState(WXK_WINDOWS_LEFT) || wxGetKeyState(WXK_WINDOWS_RIGHT);
+	}
+
+	//shenanigans
+	return false;
+}
+
 wxString KeyboardShortcuts::GetEventKeyBinding(wxString eventName) {
 	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = m_shortcuts.find(eventName);

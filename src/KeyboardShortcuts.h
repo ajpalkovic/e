@@ -131,6 +131,14 @@ public:
 	bool IsSelectDown(wxKeyEvent& event);
 	bool IsVerticalSelectDown(wxKeyEvent& event);
 	bool IsSpecialKeyDown(int key, wxKeyEvent& event);
+
+	bool IsSelectDown(wxMouseEvent& event);
+	bool IsVerticalSelectDown(wxMouseEvent& event);
+	bool IsSpecialKeyDown(int key, wxMouseEvent& event);
+	
+	bool IsSelectDown();
+	bool IsVerticalSelectDown();
+	bool IsSpecialKeyDown(int key);
 	
 private:
 	map<wxString, KeyboardShortcutType*> m_shortcuts;

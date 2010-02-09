@@ -1326,7 +1326,7 @@ void EditorCtrl::GetTextPart(unsigned int start, unsigned int end, vector<char>&
 }
 
 void EditorCtrl::Tab() {
-	const bool shiftDown = wxGetKeyState(WXK_SHIFT);
+	const bool shiftDown = m_keyboardShortcuts.IsSelectDown();
 	const bool isMultiSel = m_lines.IsSelectionMultiline() && !m_lines.IsSelectionShadow();
 
 	// If there are multiple lines selected then tab triggers indentation
@@ -6949,7 +6949,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 
 		// Check if we are starting a drag
 		bool isDragging = false;
-		if (!event.ShiftDown() && !fp.xy_outbound && m_lines.IsSelected() && !m_lines.IsSelectionShadow()) {
+		if (!m_keyboardShortcuts.IsSelectDown(event) && !fp.xy_outbound && m_lines.IsSelected() && !m_lines.IsSelectionShadow()) {
 			const vector<interval>& sels = m_lines.GetSelections();
 			for (vector<interval>::const_iterator p = sels.begin(); p != sels.end(); ++p) {
 				if ((int)p->start <= fp.pos && fp.pos <= (int)p->end) {
@@ -6971,7 +6971,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 		if (!isDragging) {
 			// If not multiselecting remove previous selections
 			// Shadow selections are removed if the click is outside
-			if (m_lines.IsSelectionShadow() || !(event.ControlDown() || event.ShiftDown())) {
+			if (m_lines.IsSelectionShadow() || !(event.ControlDown() || m_keyboardShortcuts.IsSelectDown(event))) {
 				if (fp.xy_outbound) m_lines.RemoveAllSelections();
 				else m_lines.RemoveAllSelections(true, fp.pos);
 				m_currentSel = -1;
@@ -6979,7 +6979,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 			}
 
 			// Check if we should make new selection
-			if (event.ShiftDown()) // SHIFT selects from the last point
+			if (m_keyboardShortcuts.IsSelectDown(event)) // SHIFT selects from the last point
 				SelectFromMovement(lastpos, fp.pos, false);
 			else if (event.ControlDown()) // CTRL starts a new multi selection at this point
 				m_currentSel = m_lines.AddSelection(fp.pos, fp.pos);
@@ -7116,7 +7116,7 @@ void EditorCtrl::OnMouseMotion(wxMouseEvent& event) {
 			m_currentSel = -1;
 		}
 
-		if (event.AltDown()) { // Block selection
+		if (m_keyboardShortcuts.IsVerticalSelectDown(event)) { // Block selection
 			SelectBlock(mpos, event.ControlDown());
 			DrawLayout();
 		}
