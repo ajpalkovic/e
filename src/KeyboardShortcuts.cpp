@@ -29,8 +29,8 @@
 
 using namespace std;
 
+
 KeyboardShortcuts::KeyboardShortcuts() {
-	
 }
 
 /** File Layout:
@@ -332,6 +332,12 @@ void KeyboardShortcuts::LoadSavedShortcuts() {
 		wxMessageBox(msg, _("Syntax error"), wxICON_ERROR|wxOK);
 		return;
 	}
+
+	if(jsonRoot.HasMember(wxT("selectKey"))) selectKey = jsonRoot.ItemAt(wxT("selectKey")).AsInt();
+	else selectKey = 4;
+
+	if(jsonRoot.HasMember(wxT("verticalSelectKey"))) verticalSelectKey = jsonRoot.ItemAt(wxT("verticalSelectKey")).AsInt();
+	else verticalSelectKey = 2;
 	
 	if (!jsonRoot.HasMember(wxT("shortcuts"))) return;
 	wxJSONValue shortcutsArray = jsonRoot.ItemAt(wxT("shortcuts"));
@@ -423,6 +429,8 @@ void KeyboardShortcuts::SaveShortcuts() {
 	}
 
 	root[wxT("shortcuts")] = shortcuts;
+	root[wxT("selectKey")] = selectKey;
+	root[wxT("verticalSelectKey")] = verticalSelectKey;
 
 	wxJSONWriter writer(wxJSONWRITER_STYLED);
 	writer.Write( root, fstream );
@@ -544,8 +552,10 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	
 	matches = m_keys.equal_range(event.GetKeyCode());
 	int eventCode = (event.ControlDown() ? 1 : 0) | (event.AltDown() ? 2 : 0) | (event.MetaDown() ? 4 : 0) | (event.ShiftDown() ? 8 : 0);
-	//hardcoded for now.  ignore alt and shift -> 10101 -> 21
-	int eventCodeWithoutSelection = eventCode & 21;
+	int mask = eventCode ^ selectKey ^ verticalSelectKey;
+	//If the code is 11000 and the select/alt keys are shift and alt, this would be:
+	//11000 ^ 01000 = 10000 ^ 00010 = 10000
+	int eventCodeWithoutSelection = eventCode & mask;
 		
 	int keyCode = 0, keyCodeWithoutSelection;;
 	
@@ -559,7 +569,7 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	for(iterator = matches.first; iterator != matches.second; ++iterator) {
 		cur = iterator->second;
 		keyCode = (cur->ctrl ? 1 : 0) | (cur->alt ? 2 : 0) | (cur->meta ? 4 : 0) | (cur->shift ? 8 : 0) | (cur->windows ? 16 : 0);
-		keyCodeWithoutSelection = keyCode & 21;
+		keyCodeWithoutSelection = keyCode & mask;
 		
 		if(keyCode == eventCode || (cur->type->allowSelection && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
 			return cur->type->id;
@@ -568,6 +578,26 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	}
 	
 	return KEY_DEFAULT;
+}
+
+bool KeyboardShortcuts::IsSelectDown(wxKeyEvent& event) {
+	return IsSpecialKeyDown(selectKey, event);
+}
+
+bool KeyboardShortcuts::IsVerticalSelectDown(wxKeyEvent& event) {
+	return IsSpecialKeyDown(verticalSelectKey, event);
+}
+
+bool KeyboardShortcuts::IsSpecialKeyDown(int key, wxKeyEvent& event) {
+	switch(key) {
+		case 1: return event.ControlDown();
+		case 2: return event.AltDown();
+		case 4: return event.MetaDown();
+		case 8: return event.ShiftDown();
+	}
+
+	//shenanigans
+	return false;
 }
 
 wxString KeyboardShortcuts::GetEventKeyBinding(wxString eventName) {

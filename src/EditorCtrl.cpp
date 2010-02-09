@@ -5656,7 +5656,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			break;
 
 		case KEY_EDITOR_CTRL_DELETE_CURRENT_LINE: // Ctrl-K
-			DelCurrentLine(!event.ShiftDown());
+			DelCurrentLine(!m_keyboardShortcuts.IsSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_SHOW_SCOPE_TIP: // Ctrl-P
@@ -5676,15 +5676,15 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			break;
 
 		case KEY_EDITOR_CTRL_CURSOR_WORD_LEFT: // Ctrl <-
-			CursorWordLeft(event.ShiftDown() || event.AltDown());
+			CursorWordLeft(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_CURSOR_WORD_RIGHT: // Ctrl ->
-			CursorWordRight(event.ShiftDown() || event.AltDown());
+			CursorWordRight(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_CURSOR_UP: // Ctrl arrow up
-			if (event.ShiftDown() || event.AltDown()) CursorUp(true);
+			if (m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event)) CursorUp(true);
 			else {
 				scrollPos = scrollPos - (scrollPos % m_lines.GetLineHeight()) - m_lines.GetLineHeight();
 				if (scrollPos < 0) scrollPos = 0;
@@ -5709,7 +5709,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			break;
 
 		case KEY_EDITOR_CTRL_CURSOR_DOWN: // Ctrl arrow down
-			if (event.ShiftDown() || event.AltDown()) CursorDown(true);
+			if (m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event)) CursorDown(true);
 			else {
 				const wxSize size = GetClientSize();
 				scrollPos = scrollPos - (scrollPos % m_lines.GetLineHeight()) + m_lines.GetLineHeight();
@@ -5737,7 +5737,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			SetPos(0);
 
 			// Handle selection
-			if (!event.ShiftDown()) m_lines.RemoveAllSelections();
+			if (!m_keyboardShortcuts.IsSelectDown(event)) m_lines.RemoveAllSelections();
 			else if (oldpos != 0) SelectFromMovement(0, oldpos);
 
 			lastaction = ACTION_NONE;
@@ -5754,7 +5754,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			SetPos(pos);
 
 			// Handle selection
-			if (!event.ShiftDown()) m_lines.RemoveAllSelections();
+			if (!m_keyboardShortcuts.IsSelectDown(event)) m_lines.RemoveAllSelections();
 			else if (oldpos != m_lines.GetPos()) SelectFromMovement(oldpos, m_lines.GetPos());
 
 			lastaction = ACTION_NONE;
@@ -5765,19 +5765,19 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			break;
 
 		case KEY_EDITOR_CTRL_LEFT:
-			CursorLeft(event.ShiftDown() || event.AltDown());
+			CursorLeft(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_RIGHT:
-			CursorRight(event.ShiftDown() || event.AltDown());
+			CursorRight(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_UP:
-			CursorUp(event.ShiftDown() || event.AltDown());
+			CursorUp(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_DOWN:
-			CursorDown(event.ShiftDown() || event.AltDown());
+			CursorDown(m_keyboardShortcuts.IsSelectDown(event) || m_keyboardShortcuts.IsVerticalSelectDown(event));
 			break;
 
 		case KEY_EDITOR_CTRL_HOME:
@@ -5796,7 +5796,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 				}
 
 				// Handle selection
-				if (!event.ShiftDown()) m_lines.RemoveAllSelections();
+				if (!m_keyboardShortcuts.IsSelectDown(event)) m_lines.RemoveAllSelections();
 				else if (oldpos != m_lines.GetPos()) SelectFromMovement(oldpos, m_lines.GetPos());
 
 				lastaction = ACTION_NONE;
@@ -5807,24 +5807,24 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			m_lines.SetPos(m_lines.GetLineEndpos(m_lines.GetCurrentLine()));
 
 			// Handle selection
-			if (!event.ShiftDown()) m_lines.RemoveAllSelections();
+			if (!m_keyboardShortcuts.IsSelectDown(event)) m_lines.RemoveAllSelections();
 			else if (oldpos != m_lines.GetPos()) SelectFromMovement(oldpos, m_lines.GetPos());
 
 			lastaction = ACTION_NONE;
 			break;
 
 		case KEY_EDITOR_CTRL_PAGEUP:
-			PageUp(event.ShiftDown());
+			PageUp(m_keyboardShortcuts.IsSelectDown(event));
 			lastaction = ACTION_NONE;
 			break;
 
 		case KEY_EDITOR_CTRL_PAGEDOWN:
-			PageDown(event.ShiftDown());
+			PageDown(m_keyboardShortcuts.IsSelectDown(event));
 			lastaction = ACTION_NONE;
 			break;
 
 		case KEY_EDITOR_CTRL_DELETE:
-			if (event.ShiftDown()) OnCut();
+			if (m_keyboardShortcuts.IsSelectDown(event)) OnCut();
 			else {
 				pos = m_lines.GetPos();
 
@@ -6017,7 +6017,7 @@ void EditorCtrl::OnChar(wxKeyEvent& event) {
 			break;
 
 		case KEY_EDITOR_CTRL_NEWLINE:
-			if (event.ShiftDown()) {
+			if (m_keyboardShortcuts.IsSelectDown(event)) {
 				// Dismiss selections/snippets
 				if (m_snippetHandler.IsActive()) m_snippetHandler.Clear();
 				RemoveAllSelections();

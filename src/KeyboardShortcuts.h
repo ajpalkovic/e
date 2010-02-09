@@ -128,7 +128,9 @@ public:
 	inline wxString Menu(wxString eventName) { return GetEventMenuText(eventName); }
 	wxString TranslateCodeToString(int keycode);
 
-
+	bool IsSelectDown(wxKeyEvent& event);
+	bool IsVerticalSelectDown(wxKeyEvent& event);
+	bool IsSpecialKeyDown(int key, wxKeyEvent& event);
 	
 private:
 	map<wxString, KeyboardShortcutType*> m_shortcuts;
@@ -136,6 +138,9 @@ private:
 	multimap<int, KeyboardShortcut*> m_keys;
 	
 	wxString m_path;
+
+	//1-Ctrl, 2-Alt, 4-Shift, 8-Meta, 16-Windows
+	int selectKey, verticalSelectKey;
 };
 
 static int IsNumberedAccelKey(const wxString& str, const wxChar *prefix, wxKeyCode prefixCode, unsigned first, unsigned last);
