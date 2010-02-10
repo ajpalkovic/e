@@ -57,6 +57,10 @@ void KeyboardShortcuts::Init(wxString path) {
 	LoadDefaultShortcuts();
 	MergeShortcuts();
 	SetupShortcutIntMappings();
+
+	selectKey = 8;
+	verticalSelectKey = 2;
+	multiSelectKey = 1;
 }
 
 void KeyboardShortcuts::LoadDefaultShortcuts() {
@@ -334,13 +338,8 @@ void KeyboardShortcuts::LoadSavedShortcuts() {
 	}
 
 	if(jsonRoot.HasMember(wxT("selectKey"))) selectKey = jsonRoot.ItemAt(wxT("selectKey")).AsInt();
-	else selectKey = 4;
-
 	if(jsonRoot.HasMember(wxT("verticalSelectKey"))) verticalSelectKey = jsonRoot.ItemAt(wxT("verticalSelectKey")).AsInt();
-	else verticalSelectKey = 2;
-
 	if(jsonRoot.HasMember(wxT("multiSelectKey"))) multiSelectKey = jsonRoot.ItemAt(wxT("multiSelectKey")).AsInt();
-	else multiSelectKey = 1;
 	
 	if (!jsonRoot.HasMember(wxT("shortcuts"))) return;
 	wxJSONValue shortcutsArray = jsonRoot.ItemAt(wxT("shortcuts"));
@@ -508,7 +507,7 @@ void KeyboardShortcuts::SetupShortcutIntMappings() {
 	
 	RegisterShortcutIntMapping(wxT("Delete"), KEY_EDITOR_CTRL_DELETE);
 	RegisterShortcutIntMapping(wxT("Backspace"), KEY_EDITOR_CTRL_BACKSPACE);
-	RegisterShortcutIntMapping(wxT("New line"), KEY_EDITOR_CTRL_NEWLINE);
+	RegisterShortcutIntMapping(wxT("Newline"), KEY_EDITOR_CTRL_NEWLINE);
 	RegisterShortcutIntMapping(wxT("Tab"), KEY_EDITOR_CTRL_TAB);
 	RegisterShortcutIntMapping(wxT("Escape"), KEY_EDITOR_CTRL_ESCAPE);
 }
@@ -556,7 +555,11 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	
 	matches = m_keys.equal_range(event.GetKeyCode());
 	int eventCode = (event.ControlDown() ? 1 : 0) | (event.AltDown() ? 2 : 0) | (event.MetaDown() ? 4 : 0) | (event.ShiftDown() ? 8 : 0);
-	int mask = eventCode ^ selectKey ^ verticalSelectKey;
+	//mask is gonna be 00110 then we invert it to 11001.  now we and it with each event which removes the 'optional' keys.
+	//for instance, if ctrl and shift are pressed: 00011, but only ctrl is required, we do: 00011 & 11001 = 00001
+	int mask = selectKey | verticalSelectKey;
+	mask = ~mask;
+
 	//If the code is 11000 and the select/alt keys are shift and alt, this would be:
 	//11000 ^ 01000 = 10000 ^ 00010 = 10000
 	int eventCodeWithoutSelection = eventCode & mask;
