@@ -338,6 +338,9 @@ void KeyboardShortcuts::LoadSavedShortcuts() {
 
 	if(jsonRoot.HasMember(wxT("verticalSelectKey"))) verticalSelectKey = jsonRoot.ItemAt(wxT("verticalSelectKey")).AsInt();
 	else verticalSelectKey = 2;
+
+	if(jsonRoot.HasMember(wxT("multiSelectKey"))) multiSelectKey = jsonRoot.ItemAt(wxT("multiSelectKey")).AsInt();
+	else multiSelectKey = 1;
 	
 	if (!jsonRoot.HasMember(wxT("shortcuts"))) return;
 	wxJSONValue shortcutsArray = jsonRoot.ItemAt(wxT("shortcuts"));
@@ -431,6 +434,7 @@ void KeyboardShortcuts::SaveShortcuts() {
 	root[wxT("shortcuts")] = shortcuts;
 	root[wxT("selectKey")] = selectKey;
 	root[wxT("verticalSelectKey")] = verticalSelectKey;
+	root[wxT("multiSelectKey")] = multiSelectKey;
 
 	wxJSONWriter writer(wxJSONWRITER_STYLED);
 	writer.Write( root, fstream );
@@ -584,6 +588,10 @@ bool KeyboardShortcuts::IsSelectDown(wxKeyEvent& event) {
 	return IsSpecialKeyDown(selectKey, event);
 }
 
+bool KeyboardShortcuts::IsMultiSelectDown(wxKeyEvent& event) {
+	return IsSpecialKeyDown(multiSelectKey, event);
+}
+
 bool KeyboardShortcuts::IsVerticalSelectDown(wxKeyEvent& event) {
 	return IsSpecialKeyDown(verticalSelectKey, event);
 }
@@ -604,6 +612,10 @@ bool KeyboardShortcuts::IsSelectDown(wxMouseEvent& event) {
 	return IsSpecialKeyDown(selectKey, event);
 }
 
+bool KeyboardShortcuts::IsMultiSelectDown(wxMouseEvent& event) {
+	return IsSpecialKeyDown(multiSelectKey, event);
+}
+
 bool KeyboardShortcuts::IsVerticalSelectDown(wxMouseEvent& event) {
 	return IsSpecialKeyDown(verticalSelectKey, event);
 }
@@ -622,6 +634,10 @@ bool KeyboardShortcuts::IsSpecialKeyDown(int key, wxMouseEvent& event) {
 
 bool KeyboardShortcuts::IsSelectDown() {
 	return IsSpecialKeyDown(selectKey);
+}
+
+bool KeyboardShortcuts::IsMultiSelectDown() {
+	return IsSpecialKeyDown(multiSelectKey);
 }
 
 bool KeyboardShortcuts::IsVerticalSelectDown() {

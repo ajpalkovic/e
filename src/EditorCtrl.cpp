@@ -5576,7 +5576,7 @@ void EditorCtrl::OnSize(wxSizeEvent& WXUNUSED(event)) {
 }
 
 void EditorCtrl::OnKeyDown(wxKeyEvent& event) {
-	if (event.GetKeyCode() == WXK_ALT) {
+	if (m_keyboardShortcuts.IsVerticalSelectDown(event)) {
 		m_blockKeyState = BLOCKKEY_INIT;
 		m_blocksel_ids.clear();
 	}
@@ -5584,7 +5584,7 @@ void EditorCtrl::OnKeyDown(wxKeyEvent& event) {
 }
 
 void EditorCtrl::OnKeyUp(wxKeyEvent& event) {
-	if (event.GetKeyCode() == WXK_ALT) {
+	if (m_keyboardShortcuts.IsVerticalSelectDown(event)) {
 		m_blockKeyState = BLOCKKEY_NONE;
 		m_blocksel_ids.clear();
 	}
@@ -6510,7 +6510,7 @@ void EditorCtrl::SelectFromMovement(unsigned int oldpos, unsigned int newpos, bo
 	if (oldpos == newpos) return; // Empty selection
 
 	// If alt key is down do a block selection
-	if (!wxGetKeyState(WXK_ALT))
+	if (!m_keyboardShortcuts.IsVerticalSelectDown())
 		m_blockKeyState = BLOCKKEY_NONE; // may not have caught keyup
 
 	if (m_blockKeyState != BLOCKKEY_NONE) {
@@ -6942,7 +6942,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 
 	// Check if it is really a triple click
 	if (m_tripleClicks.TripleClickedLine((int)line_id)) {
-		SelectLine(line_id, event.ControlDown());
+		SelectLine(line_id, m_keyboardShortcuts.IsMultiSelectDown(event));
 	}
 	else {
 		MakeCaretVisible();
@@ -6954,7 +6954,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 			for (vector<interval>::const_iterator p = sels.begin(); p != sels.end(); ++p) {
 				if ((int)p->start <= fp.pos && fp.pos <= (int)p->end) {
 					isDragging = true;
-					if (event.ControlDown() && p->start == p->end) {
+					if (m_keyboardShortcuts.IsMultiSelectDown(event) && p->start == p->end) {
 						// ctrl-clicking a zero length selection removes it
 						m_lines.RemoveSelection(distance(sels.begin(), p));
 					}
@@ -6971,7 +6971,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 		if (!isDragging) {
 			// If not multiselecting remove previous selections
 			// Shadow selections are removed if the click is outside
-			if (m_lines.IsSelectionShadow() || !(event.ControlDown() || m_keyboardShortcuts.IsSelectDown(event))) {
+			if (m_lines.IsSelectionShadow() || !(m_keyboardShortcuts.IsMultiSelectDown(event) || m_keyboardShortcuts.IsSelectDown(event))) {
 				if (fp.xy_outbound) m_lines.RemoveAllSelections();
 				else m_lines.RemoveAllSelections(true, fp.pos);
 				m_currentSel = -1;
@@ -6981,7 +6981,7 @@ void EditorCtrl::OnMouseLeftDown(wxMouseEvent& event) {
 			// Check if we should make new selection
 			if (m_keyboardShortcuts.IsSelectDown(event)) // SHIFT selects from the last point
 				SelectFromMovement(lastpos, fp.pos, false);
-			else if (event.ControlDown()) // CTRL starts a new multi selection at this point
+			else if (m_keyboardShortcuts.IsMultiSelectDown(event)) // CTRL starts a new multi selection at this point
 				m_currentSel = m_lines.AddSelection(fp.pos, fp.pos);
 		}
 	}
@@ -7117,7 +7117,7 @@ void EditorCtrl::OnMouseMotion(wxMouseEvent& event) {
 		}
 
 		if (m_keyboardShortcuts.IsVerticalSelectDown(event)) { // Block selection
-			SelectBlock(mpos, event.ControlDown());
+			SelectBlock(mpos, m_keyboardShortcuts.IsMultiSelectDown(event));
 			DrawLayout();
 		}
 		else {
@@ -7456,10 +7456,10 @@ void EditorCtrl::OnMouseDClick(wxMouseEvent& event) {
 	// Start timing for a triple click.
 	m_tripleClicks.Start(m_lines.GetLineFromCharPos(fp.pos));
 
-	if (event.AltDown()) SelectScope();
+	if (m_keyboardShortcuts.IsVerticalSelectDown()) SelectScope();
 	else {
 		// Check if we should multiselect
-		bool multiselect = event.ControlDown();
+		bool multiselect = m_keyboardShortcuts.IsMultiSelectDown(event);
 
 		// Select the word clicked on
 		SelectWord(fp.pos, multiselect);

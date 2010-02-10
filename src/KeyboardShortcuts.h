@@ -129,14 +129,17 @@ public:
 	wxString TranslateCodeToString(int keycode);
 
 	bool IsSelectDown(wxKeyEvent& event);
+	bool IsMultiSelectDown(wxKeyEvent& event);
 	bool IsVerticalSelectDown(wxKeyEvent& event);
 	bool IsSpecialKeyDown(int key, wxKeyEvent& event);
 
 	bool IsSelectDown(wxMouseEvent& event);
+	bool IsMultiSelectDown(wxMouseEvent& event);
 	bool IsVerticalSelectDown(wxMouseEvent& event);
 	bool IsSpecialKeyDown(int key, wxMouseEvent& event);
 	
 	bool IsSelectDown();
+	bool IsMultiSelectDown();
 	bool IsVerticalSelectDown();
 	bool IsSpecialKeyDown(int key);
 	
@@ -148,7 +151,7 @@ private:
 	wxString m_path;
 
 	//1-Ctrl, 2-Alt, 4-Shift, 8-Meta, 16-Windows
-	int selectKey, verticalSelectKey;
+	int selectKey, verticalSelectKey, multiSelectKey;
 };
 
 static int IsNumberedAccelKey(const wxString& str, const wxChar *prefix, wxKeyCode prefixCode, unsigned first, unsigned last);
