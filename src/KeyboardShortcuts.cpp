@@ -599,6 +599,19 @@ bool KeyboardShortcuts::IsVerticalSelectDown(wxKeyEvent& event) {
 	return IsSpecialKeyDown(verticalSelectKey, event);
 }
 
+bool KeyboardShortcuts::IsVerticalSelectCurrentlyDown(wxKeyEvent& event) {
+	int code = -1;
+	switch(verticalSelectKey) {
+		case 1: code = WXK_CONTROL; break;
+		case 2: code = WXK_ALT; break;
+		//case 4: code = WXK_META;
+		case 8: code = WXK_SHIFT; break;
+		//case 16: return wxGetKeyState(WXK_WINDOWS_LEFT) || wxGetKeyState(WXK_WINDOWS_RIGHT);
+	}
+
+	return event.GetKeyCode() == code;
+}
+
 bool KeyboardShortcuts::IsSpecialKeyDown(int key, wxKeyEvent& event) {
 	switch(key) {
 		case 1: return event.ControlDown();

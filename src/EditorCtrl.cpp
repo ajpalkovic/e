@@ -5576,7 +5576,7 @@ void EditorCtrl::OnSize(wxSizeEvent& WXUNUSED(event)) {
 }
 
 void EditorCtrl::OnKeyDown(wxKeyEvent& event) {
-	if (m_keyboardShortcuts.IsVerticalSelectDown(event)) {
+	if (m_keyboardShortcuts.IsVerticalSelectCurrentlyDown(event)) {
 		m_blockKeyState = BLOCKKEY_INIT;
 		m_blocksel_ids.clear();
 	}
@@ -5584,7 +5584,7 @@ void EditorCtrl::OnKeyDown(wxKeyEvent& event) {
 }
 
 void EditorCtrl::OnKeyUp(wxKeyEvent& event) {
-	if (m_keyboardShortcuts.IsVerticalSelectDown(event)) {
+	if (m_keyboardShortcuts.IsVerticalSelectCurrentlyDown(event)) {
 		m_blockKeyState = BLOCKKEY_NONE;
 		m_blocksel_ids.clear();
 	}

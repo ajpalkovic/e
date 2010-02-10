@@ -131,6 +131,7 @@ public:
 	bool IsSelectDown(wxKeyEvent& event);
 	bool IsMultiSelectDown(wxKeyEvent& event);
 	bool IsVerticalSelectDown(wxKeyEvent& event);
+	bool IsVerticalSelectCurrentlyDown(wxKeyEvent& event);
 	bool IsSpecialKeyDown(int key, wxKeyEvent& event);
 
 	bool IsSelectDown(wxMouseEvent& event);
