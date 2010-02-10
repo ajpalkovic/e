@@ -29,11 +29,35 @@
 
 using namespace std;
 
+/**
+ * This file maintains a list of all of the keyboard shortcuts for E.
+ * Essentially the file defines the concept of a keyboard event, like Copy.
+ * Multiple key combinations can then be bound to the event.
+ * One of the combinations is designated as the "primary" shortcut.  This shortcut will be used in the menus.
+ * The other shortcuts typically have to be implemented in the EditorCtrl::OnChar function.
+ * This function uses a big switch statement to process the events.  However, so far, events are only identified by strings.
+ * For speed then, there is a big enum in the header file that defines a number of different keyboard event types.
+ * Each of these is then mapped to various event types in SetupShortcutIntMappings.  This allows us to still use a switch statement, because we can switch on the enum.
+ *
+ * Additionally, we want the user to be able to override the default shortcuts, but we also want to be able to add new shortcut types over time.
+ * This file maintains a list of default keyboard shortcuts (They have to be done here because of the enum).
+ * When the editor is first launched, it will copy each of the default keyboard shortcuts and write them to a file.
+ * On subsequent loads, the editor will check if there are any new event TYPES in the default shortcuts.  If there are, those will be appended to the file.
+ */
 
+/*
+TODO:
+support syntax/bundle shortcuts
+gui
+support dash in default keyboard shortcut string
+more efficient json
+what if the same keys are bound to multiple events?  should GetEventType return a vector then?
+fix handling of meta / windows keys
+*/
 KeyboardShortcuts::KeyboardShortcuts() {
-	selectKey = 8;
-	verticalSelectKey = 2;
-	multiSelectKey = 1;
+	selectKey = 8;			//shift
+	verticalSelectKey = 2;	//alt
+	multiSelectKey = 1;		//ctrl
 }
 
 /** File Layout:
@@ -53,7 +77,10 @@ KeyboardShortcuts::KeyboardShortcuts() {
 			]
 		},
 		...
-	];
+	],
+	selectKey: 8,
+	verticalSelectKey: 2,
+	multiSelectKey: 1
 */
 void KeyboardShortcuts::Init(wxString path) {
 	LoadCustomShortcuts(path);
@@ -240,7 +267,6 @@ void KeyboardShortcuts::RegisterDefaultShortcut(wxString name, wxString menuText
 }
 
 void KeyboardShortcuts::RegisterDefaultShortcutAndBinding(wxString name, wxString menuText, wxString binding, bool allowSelection, bool allowVerticalSelection) {
-	//If the event doesn't exist, create it
 	CreateEventType(m_defaultShortcuts, name, menuText, allowSelection, allowVerticalSelection);
 
 	int code, start;
@@ -248,6 +274,7 @@ void KeyboardShortcuts::RegisterDefaultShortcutAndBinding(wxString name, wxStrin
 	
 	for(start = binding.size()-1; start >= 0; start--) {
 		if(binding.GetChar(start) == '+') {
+			//take care of Ctrl++
 			if(start > 0 && binding.GetChar(start-1) == '+') {
 				continue;
 			}
@@ -443,6 +470,8 @@ void KeyboardShortcuts::MergeShortcuts() {
 	KeyboardShortcutType* type;
 	bool anyMerged = false;
 
+	//Copy over any new keyboard event types that are in defaultShortcuts.
+	//If new bindings are added to an existing event, say, Ctrl+D is mapped to Copy (in addition to Ctrl+C), that will not be copied over.
 	for(iterator = m_defaultShortcuts.begin(); iterator != m_defaultShortcuts.end(); ++iterator) {
 		type = iterator->second;
 
@@ -452,7 +481,7 @@ void KeyboardShortcuts::MergeShortcuts() {
 			//wxLogDebug(wxT("Found custom shortcut: %s"), type->name);
 			continue;
 		}
-		wxLogDebug(wxT("Did not find custom shortcut: %s"), type->name);
+		//wxLogDebug(wxT("Did not find custom shortcut: %s"), type->name);
 
 		anyMerged = true;
 		m_shortcuts.insert(m_shortcuts.begin(), pair<wxString, KeyboardShortcutType*>(type->name, type));
@@ -520,8 +549,9 @@ void KeyboardShortcuts::RegisterShortcutIntMapping(wxString name, int id) {
 	existingEvent->id = id;
 }
 
-//This funciton will be called once for each event type to set basic properties about the event
 void KeyboardShortcuts::CreateEventType(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, wxString menuText, bool allowSelection, bool allowVerticalSelection) {
+	//Each keyboard event type needs to be created and stored in a hashtable.  Multiple key combinations will be bound to a type.
+	//The event only needs to be created once though
 	if(shortcuts.find(name) == shortcuts.end()) {
 		//this event doesn't exist, lets add it
 		KeyboardShortcutType* type = new KeyboardShortcutType(name, menuText, allowSelection, allowVerticalSelection);
@@ -531,8 +561,8 @@ void KeyboardShortcuts::CreateEventType(map<wxString, KeyboardShortcutType*>& sh
 	}
 }
 
-//This function will be called multiple times to associate a key binding with an event type
 KeyboardShortcut* KeyboardShortcuts::CreateKeyBinding(map<wxString, KeyboardShortcutType*>& shortcuts, wxString name, bool primary, int code, bool ctrl, bool alt, bool shift, bool meta, bool windows) {
+	//This binds a specific set of keystrokes to one event.
 	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = shortcuts.find(name);
 	if(iterator == shortcuts.end()) {
@@ -549,20 +579,20 @@ KeyboardShortcut* KeyboardShortcuts::CreateKeyBinding(map<wxString, KeyboardShor
 }
 
 int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
+	//Returns the enum value of a given set of keystrokes.
+	//The m_keys hashtable esentially maps the event.GetKeyCode() to the various KeyboardShortcuts.
+	//This means that Ctrl+A and Alt+A will both be mapped to A in the table, so we need to check for that
+
 	multimap<int, KeyboardShortcut*>::iterator iterator;
 	pair<multimap<int, KeyboardShortcut*>::iterator, multimap<int, KeyboardShortcut*>::iterator> matches;
 	
 	matches = m_keys.equal_range(event.GetKeyCode());
 	int eventCode = (event.ControlDown() ? 1 : 0) | (event.AltDown() ? 2 : 0) | (event.MetaDown() ? 4 : 0) | (event.ShiftDown() ? 8 : 0);
-	//mask is gonna be 00110 then we invert it to 11001.  now we and it with each event which removes the 'optional' keys.
-	//for instance, if ctrl and shift are pressed: 00011, but only ctrl is required, we do: 00011 & 11001 = 00001
-	int mask = selectKey | verticalSelectKey;
-	mask = ~mask;
-
-	//If the code is 11000 and the select/alt keys are shift and alt, this would be:
-	//11000 ^ 01000 = 10000 ^ 00010 = 10000
-	int eventCodeWithoutSelection = eventCode & mask;
-		
+	//in EditorCtrl::OnChar, many of the events should take place regardless of whether the select/vertical select keys are being pressed down.
+	//So, we want to get two ints.  One that indicates if a potential event type matches all of the modifiers the user pressed, and a second, that indicates if the modifers match but ignore the select/vertical select keys.
+	//So, first we build a mask by setting the values of the select/vertical select keys to 1.  Inverting the int makes them 0 and all others 1.  Then and'ing that with any other int will 0 out the select / vertical select keys.
+	//For instance, if ctrl and shift are pressed: 00011, but only ctrl is required, we do: 00011 & 11001 = 00001
+	int mask, eventCodeWithoutSelection;
 	int keyCode = 0, keyCodeWithoutSelection;;
 	
 	KeyboardShortcut* cur;
@@ -570,12 +600,14 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 	//Multiple values might be mapped to the C key for instance, but in theory, only one is mapped to ctrl-c.
 	//If there are multiple values, only the first is returned.
 	//We need to check now if keys like ctrl and shift are pressed as well.
-	//However, the user could also be selecting text.  Some of the existing code currently checks that inside of later method calls.  
-	//This means we need to ignore keys like shift and alt if the keyboard event type accepts selection input
 	for(iterator = matches.first; iterator != matches.second; ++iterator) {
 		cur = iterator->second;
 		keyCode = (cur->ctrl ? 1 : 0) | (cur->alt ? 2 : 0) | (cur->meta ? 4 : 0) | (cur->shift ? 8 : 0) | (cur->windows ? 16 : 0);
+		mask = 0;
+		if(cur->type->allowSelection) mask = mask | selectionKey;
+		if(cur->type->allowVerticalSelection) mask = mask | verticalSelectionKey;
 		keyCodeWithoutSelection = keyCode & mask;
+		eventCodeWithoutSelection = eventCode & mask;
 		
 		if(keyCode == eventCode || (cur->type->allowSelection && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
 			return cur->type->id;
@@ -672,6 +704,20 @@ bool KeyboardShortcuts::IsSpecialKeyDown(int key) {
 	return false;
 }
 
+bool KeyboardShortcuts::IsUndo(int key) {
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
+	iterator = m_shortcuts.find(wxT("Undo"));
+	if(iterator == m_shortcuts.end()) return false;
+
+	KeyboardShortcutType* type = iterator->second;
+
+	for(unsigned int c = 0; c < type->shortcuts.size(); c++) {
+		if(type->shortcuts[c]->code == key) return true;
+	}
+
+	return false;
+}
+
 wxString KeyboardShortcuts::GetEventKeyBinding(wxString eventName) {
 	map<wxString, KeyboardShortcutType*>::iterator iterator;
 	iterator = m_shortcuts.find(eventName);
@@ -691,13 +737,20 @@ wxString KeyboardShortcuts::GetEventKeyBinding(wxString eventName) {
 	
 	return ret;
 }
+
 wxString KeyboardShortcuts::GetEventMenuText(wxString eventName) {
+	wxString menuText = eventName;
+
+	map<wxString, KeyboardShortcutType*>::iterator iterator;
+	iterator = m_shortcuts.find(eventName);
+	if(iterator != m_shortcuts.end()) menuText = iterator->second->menuText;
+
 	wxString binding = GetEventKeyBinding(eventName);
-	if(binding.IsEmpty()) return eventName;
-	//TODO: Put in the ampersand here
-	return eventName+wxT("\t")+binding;
+	if(binding.IsEmpty()) return menuText;
+	return menuText+wxT("\t")+binding;
 }
 
+//This is code from menucmn.cpp thats not publicly accessible, so I copied it here and made a few small modifications.
 wxString KeyboardShortcuts::TranslateCodeToString(int code) {
     switch(code) {
         case WXK_BACK: return wxT("Back");
@@ -812,8 +865,6 @@ wxString KeyboardShortcuts::TranslateCodeToString(int code) {
    return wxT("");
 }
 
-
-//This is code from menucmn.cpp thats not publicly accessible, so I copied it here.
 // return true if the 2 strings refer to the same accel
 //
 // as accels can be either translated or not, check for both possibilities and

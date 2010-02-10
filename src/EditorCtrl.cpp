@@ -6155,13 +6155,13 @@ void EditorCtrl::DoCommand(int c) {
 	wxLogDebug(wxT("DoCommand %d"), c);
 	bool command_active = false;
 	if (commandStack.empty()) {
-		if (c == 26) { // ctrl-z
+		if (m_keyboardShortcuts.IsUndo(c)) { // ctrl-z
 			commandStack.push_back(c);
 			command_active = cmd_Undo(0, commandStack);
 		}
 	}
 	else {
-		if (commandStack[0] == 26) {
+		if (m_keyboardShortcuts.IsUndo(commandStack[0])) {
 			commandStack.push_back(c);
 			command_active = cmd_Undo(0, commandStack);
 		}
@@ -6172,7 +6172,7 @@ void EditorCtrl::DoCommand(int c) {
 
 void EditorCtrl::EndCommand() {
 	if (!commandStack.empty()) {
-		if (commandStack[0] == 26) 
+		if (m_keyboardShortcuts.IsUndo(commandStack[0]))
 			cmd_Undo(0, commandStack, true);
 		commandStack.clear();
 	}
@@ -6218,7 +6218,7 @@ bool EditorCtrl::cmd_Undo(int WXUNUSED(count), vector<int>& cStack, bool end) {
 		int action = cStack.back();
 		int currentVersion = doc.GetVersionID();
 
-		if(action == WXK_UP || action == 26) {
+		if(action == WXK_UP || m_keyboardShortcuts.IsUndo(action)) {
 			if (currentVersion) {
 				const doc_id di = doc.GetDraftParent();
 				if (!di.IsOk()) return true; // We are in top document (has no parent)

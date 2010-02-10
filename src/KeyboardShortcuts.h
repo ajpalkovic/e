@@ -143,6 +143,8 @@ public:
 	bool IsMultiSelectDown();
 	bool IsVerticalSelectDown();
 	bool IsSpecialKeyDown(int key);
+
+	bool IsUndo(int key);
 	
 private:
 	map<wxString, KeyboardShortcutType*> m_shortcuts;
