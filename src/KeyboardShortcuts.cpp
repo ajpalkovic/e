@@ -604,12 +604,13 @@ int KeyboardShortcuts::GetEventType(wxKeyEvent& event) {
 		cur = iterator->second;
 		keyCode = (cur->ctrl ? 1 : 0) | (cur->alt ? 2 : 0) | (cur->meta ? 4 : 0) | (cur->shift ? 8 : 0) | (cur->windows ? 16 : 0);
 		mask = 0;
-		if(cur->type->allowSelection) mask = mask | selectionKey;
-		if(cur->type->allowVerticalSelection) mask = mask | verticalSelectionKey;
+		if(cur->type->allowSelection) mask = mask | selectKey;
+		if(cur->type->allowVerticalSelection) mask = mask | verticalSelectKey;
+		mask = ~mask;
 		keyCodeWithoutSelection = keyCode & mask;
 		eventCodeWithoutSelection = eventCode & mask;
 		
-		if(keyCode == eventCode || (cur->type->allowSelection && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
+		if(keyCode == eventCode || ((cur->type->allowSelection || cur->type->allowVerticalSelection) && keyCodeWithoutSelection == eventCodeWithoutSelection)) {
 			return cur->type->id;
 		}
 		
