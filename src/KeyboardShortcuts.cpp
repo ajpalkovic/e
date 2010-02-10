@@ -31,6 +31,9 @@ using namespace std;
 
 
 KeyboardShortcuts::KeyboardShortcuts() {
+	selectKey = 8;
+	verticalSelectKey = 2;
+	multiSelectKey = 1;
 }
 
 /** File Layout:
@@ -57,10 +60,6 @@ void KeyboardShortcuts::Init(wxString path) {
 	LoadDefaultShortcuts();
 	MergeShortcuts();
 	SetupShortcutIntMappings();
-
-	selectKey = 8;
-	verticalSelectKey = 2;
-	multiSelectKey = 1;
 }
 
 void KeyboardShortcuts::LoadDefaultShortcuts() {
