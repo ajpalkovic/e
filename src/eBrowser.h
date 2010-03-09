@@ -25,7 +25,7 @@ inline wxBrowser* NewBrowser(wxWindow * parent, wxWindowID id,
 				const wxPoint& point = wxDefaultPosition, 
                 const wxSize& size = wxDefaultSize) 
 {
-	return new wxBrowser(parent, id, point, size);
+	return new wxBrowser(parent, id);
 }
 #endif
 

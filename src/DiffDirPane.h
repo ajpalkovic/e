@@ -19,6 +19,9 @@
 	#include <wx/wx.h>
 #endif
 #include <wx/treectrl.h>
+#ifndef __WXMSW__
+    #include <wx/imaglist.h>
+#endif
 
 WX_DECLARE_STRING_HASH_MAP( int, IconHash );
 

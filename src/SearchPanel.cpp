@@ -245,7 +245,7 @@ void SearchPanel::SetState(cxFindResult result, int resultCount) {
 	}
 	searchbox->Refresh();
 
-	wxString results = (0 <= resultCount) ? wxString::Format(wxT("%d results"), resultCount) : wxEmptyString;
+	wxString results = (0 <= resultCount) ? wxString::Format(wxT("%d results"), resultCount) : wxT("");
 	commandResults->SetLabel(results);
 }
 

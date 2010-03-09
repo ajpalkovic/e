@@ -76,6 +76,10 @@
 #include <wx/msw/registry.h>
 #endif
 
+#ifndef uintptr_t
+    #include <stdint.h>
+#endif
+
 
 class FrameDropTarget : public wxFileDropTarget {
 public:

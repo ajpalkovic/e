@@ -16,6 +16,10 @@
 #include "RemoteThread.h"
 #include "eSettings.h"
 
+#ifndef uintptr_t
+    #include <stdint.h>
+#endif
+
 // Ctrl id's
 enum {
 	CTRL_PROFILELIST = 100,

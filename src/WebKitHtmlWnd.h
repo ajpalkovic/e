@@ -25,7 +25,7 @@ public:
 	wxBrowser(wxWindow *parent, wxWindowID id);
 	virtual ~wxBrowser();
 	virtual wxWindow* GetWindow();
-	virtual bool LoadString(wxString html);
+    virtual bool LoadString(const wxString& html);
 	virtual void LoadUrl(const wxString &_url, const wxString &_frame = wxEmptyString, bool keepHistory=false);
 	virtual bool Refresh(wxHtmlRefreshLevel level);
 	virtual bool GoBack();

@@ -2,6 +2,10 @@
 #include <wx/tokenzr.h>
 #include "Utf.h"
 
+#ifndef uintptr_t
+    #include <stdint.h>
+#endif
+
 #ifdef __WXMSW__
 void InplaceConvertCRLFtoLF(wxString& text) {
 	// WINDOWS ONLY!! newline conversion

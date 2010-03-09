@@ -2569,7 +2569,7 @@ bool EditorCtrl::SaveText(bool askforpath) {
 
 	if (askforpath || newpath.empty()) {
 		wxFileDialog dlg(this, _T("Save as..."), _T(""), _T(""), EditorFrame::DefaultFileFilters, wxSAVE|wxCHANGE_DIR);
-		dlg.SetPath( newpath.empty() ? _("Untitled") : newpath );
+		dlg.SetPath( newpath.empty() ? wxT("Untitled") : newpath );
 
 		dlg.Centre();
 		if (dlg.ShowModal() != wxID_OK) return false;

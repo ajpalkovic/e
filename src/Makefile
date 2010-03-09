@@ -24,9 +24,9 @@ ifeq ($(DEBUG),0)
 	EXE      = e
 	PKGSUFF  =
 else
-	ECORE    = ecore
+	ECORE    = ecored
 	CXXFLAGS = -O0 -g
-	LDFLAGS  = -g
+	LDFLAGS  = -g -z muldefs
 	EXT_DIR  = $(ROOTDIR)/external/out.debug
 	OUTDIR   = .objs.debug
 	EXE      = e.debug
@@ -66,7 +66,7 @@ EXCEPT = CygwinDlg.cpp \
          ShellContextMenu.cpp \
          wxactivex.cpp
 
-SRCS = $(filter-out $(EXCEPT), $(wildcard *.cpp)) 
+SRCS = $(filter-out $(EXCEPT), $(wildcard *.cpp))  $(wildcard webconnect/*.cpp)
 OBJS = $(SRCS:%.cpp=$(OUTDIR)/%.o)
 DEPS = $(SRCS:%.cpp=$(OUTDIR)/%.d)
 
