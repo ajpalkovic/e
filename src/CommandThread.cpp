@@ -22,8 +22,20 @@
 #include "ShellRunner.h"
 
 CommandThread::CommandThread(wxString& command, cxEnv& env, bool* shouldExecute) : 
-	m_command(command), m_env(env), m_shouldExecute(shouldExecute) {
+	m_command(command), m_env(env), m_shouldExecute(shouldExecute), ready(true) {
 	
+}
+
+CommandThread::CommandThread(bool* shouldExecute) :
+	m_shouldExecute(shouldExecute), ready(false) {
+	
+}
+
+void UpdateCommand(wxString& command, cxEnv& env) {
+	//need mutex for this part probably
+	this->command = command;
+	this->env = env;
+	ready = true;
 }
 
 int CommandThread::Execute() {
