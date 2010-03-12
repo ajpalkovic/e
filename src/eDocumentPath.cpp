@@ -359,10 +359,10 @@ bool eDocumentPath::InitCygwin(const bool silent) {
 
 	const bool cygwin_is_installed = !s_cygPath.empty();
 
-	if (!cygwin_is_installed) {
+	/*if (!cygwin_is_installed) {
 		if (!silent) run_cygwin_dlg(wxTheApp->GetTopWindow(), cxCYGWIN_INSTALL);
 		return false;
-	}
+	}*/
 
 	// Get last cygwin update, and see if we need to reinstall
 	const wxString supportPath = GetAppPaths().AppPath() + wxT("support\\bin\\cygwin-post-install.sh");
@@ -370,7 +370,7 @@ bool eDocumentPath::InitCygwin(const bool silent) {
 
 	wxDateTime stampTime = get_last_cygwin_update();
 
-	if (eDocumentPath_shouldUpdateCygwin(stampTime, supportFile)) {
+	/*if (eDocumentPath_shouldUpdateCygwin(stampTime, supportFile)) {
 		if (!silent) {
 			run_cygwin_dlg(wxTheApp->GetTopWindow(), cxCYGWIN_UPDATE);
 
@@ -383,7 +383,7 @@ bool eDocumentPath::InitCygwin(const bool silent) {
 			eDocumentPath::s_isCygwinInitialized = true;
 		}
 		return false;
-	}
+	}*/
 
 	eDocumentPath::s_isCygwinInitialized = true;
 	return true;

@@ -54,6 +54,7 @@ class cxRemoteAction;
 class TextTip;
 class eFrameSettings;
 class LiveCaret;
+class ErrorMessage;
 
 struct thTheme;
 class tmAction;
@@ -233,7 +234,7 @@ public:
 	search_result RegExFind(const wxString& searchtext, unsigned int start_pos, bool matchcase, map<unsigned int,interval> *captures=NULL, unsigned int end_pos=0) const;
 	search_result RegExFindBackwards(const wxString& searchtext, unsigned int start_pos, unsigned int end_pos, bool matchcase) const;
 	search_result RawRegexSearch(const char* regex, unsigned int subjectStart, unsigned int subjectEnd, unsigned int pos, map<unsigned int,interval> *captures=NULL) const;
-	search_result RawRegexSearch(const char* regex, const vector<char>& subject, unsigned int pos, map<unsigned int,interval> *captures=NULL) const;
+	static search_result RawRegexSearch(const char* regex, const vector<char>& subject, unsigned int pos, map<unsigned int,interval> *captures=NULL);
 	bool FindNextChar(wxChar c, unsigned int start_pos, unsigned int end_pos, interval& iv) const;
 	void SetSearchRange();
 	void ClearSearchRange(bool reset=false);
@@ -357,6 +358,8 @@ public:
 
 	// Theme
 	const tmTheme& GetTheme() const { return m_theme; };
+	
+	void GetErrors(std::vector<ErrorMessage>& errors);
 
 #ifdef __WXDEBUG__
 	void Print();

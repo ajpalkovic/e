@@ -15,6 +15,7 @@
 #include "Fold.h"
 #include "tmTheme.h"
 #include "EditorCtrl.h"
+#include "CommandPane.h"
 
 #ifndef WX_PRECOMP
 #include <wx/dc.h>
@@ -215,6 +216,9 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 	const vector<cxBookmark>& bookmarks = m_editorCtrl.GetBookmarks();
 	vector<cxBookmark>::const_iterator nextBookmark = bookmarks.begin();
 	while(nextBookmark != bookmarks.end() && nextBookmark->line_id < firstline) ++nextBookmark;
+	
+	std::vector<ErrorMessage> errors;
+	m_editorCtrl.GetErrors(errors);
 
 	// Draw each line
 	for (unsigned int i = firstline; i < linecount; ++i) {
@@ -239,6 +243,13 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 				//m_mdc.DrawText(wxT("\u066D"), 3, ypos);
 				m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
 				++nextBookmark;
+			}
+		}
+
+		// Draw errors
+		for(unsigned int c = 0; c < errors.size(); c++) {
+			if(errors[c].lineNumber == i+1) {
+				m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
 			}
 		}
 

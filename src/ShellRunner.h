@@ -17,8 +17,8 @@ public:
 	ShellRunner(void);
 	~ShellRunner(void);
 
-	static long RawShell(const std::vector<char>& command, const std::vector<char>& input, std::vector<char>* output, std::vector<char>* errorOut, cxEnv& env, bool isUnix=true, const wxString& cwd=wxEmptyString);
-	static wxString RunShellCommand(const std::vector<char>& command, cxEnv& env);
+	static long RawShell(const std::vector<char>& command, const std::vector<char>& input, std::vector<char>* output, std::vector<char>* errorOut, cxEnv& env, bool isUnix=true, const wxString& cwd=wxEmptyString, bool silent=false);
+	static wxString RunShellCommand(const std::vector<char>& command, cxEnv& env, bool silent = false);
 
 	static wxString GetBashCommand(const wxString& cmd, cxEnv& env);
 

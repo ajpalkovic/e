@@ -45,6 +45,7 @@
 #include "IAppPaths.h"
 #include "Strings.h"
 #include "ReplaceStringParser.h"
+#include "CommandPane.h"
 
 // Document Icons
 #include "document.xpm"
@@ -891,6 +892,12 @@ bool EditorCtrl::UpdateScrollbars(unsigned int x, unsigned int y) {
 	}
 
 	return false; // no scrollbar was added or removed
+}
+
+void EditorCtrl::GetErrors(std::vector<ErrorMessage>& errors) {
+	CommandPane* pane = m_parentFrame.GetCommandPane();
+	if(pane == NULL) return;
+	pane->GetErrors(errors, *this);
 }
 
 void EditorCtrl::DrawLayout(bool isScrolling) {
@@ -5177,7 +5184,7 @@ search_result EditorCtrl::RawRegexSearch(const char* regex, unsigned int subject
 	return sr;
 }
 
-search_result EditorCtrl::RawRegexSearch(const char* regex, const vector<char>& subject, unsigned int pos, map<unsigned int,interval> *captures) const {
+search_result EditorCtrl::RawRegexSearch(const char* regex, const vector<char>& subject, unsigned int pos, map<unsigned int,interval> *captures) {
 	wxASSERT(regex);
 	wxASSERT(pos < subject.size() || pos == 0);
 

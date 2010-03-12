@@ -21,11 +21,11 @@ ShellRunner::~ShellRunner(void){}
 // Runs the given command in an appropriate shell, returning stdout, stderr and the result code.
 // If an internal error occurs, such as invalid inputs to this fuction, -1 is returned.
 //
-long ShellRunner::RawShell(const vector<char>& command, const vector<char>& input, vector<char>* output, vector<char>* errorOut, cxEnv& env, bool isUnix, const wxString& cwd) {
+long ShellRunner::RawShell(const vector<char>& command, const vector<char>& input, vector<char>* output, vector<char>* errorOut, cxEnv& env, bool isUnix, const wxString& cwd, bool silent) {
 	if (command.empty()) return -1;
 
 #ifdef __WXMSW__
-	if (isUnix && !eDocumentPath::InitCygwin()) return -1;
+	if (isUnix && !eDocumentPath::InitCygwin(silent)) return -1;
 #endif
 
 	// Create temp file with command
@@ -101,6 +101,12 @@ long ShellRunner::RawShell(const vector<char>& command, const vector<char>& inpu
 
 	// Get ready for execution
 	cxExecute exec(env, cwd);
+
+	//this will call wxSafeYield which we do not want to happen, cuz wx will try to do gui stuff in the thread.
+	if(silent) {
+		exec.SetUpdateWindow(false);
+	}
+
 	bool debugOutput = false; // default setting
 	eGetSettings().GetSettingBool(wxT("bundleDebug"), debugOutput);
 	exec.SetDebugLogging(debugOutput);
@@ -145,13 +151,13 @@ wxString ShellRunner::GetBashCommand(const wxString& cmd, cxEnv& env) {
 
 // Runs the given command in the given environment.
 // Returns the output as a string, or the empty string if there was an error.
-wxString ShellRunner::RunShellCommand(const vector<char>& command, cxEnv& env) {
+wxString ShellRunner::RunShellCommand(const vector<char>& command, cxEnv& env, bool silent) {
 	if (command.empty()) return wxEmptyString;
 
 	// Run the command
 	vector<char> input;
 	vector<char> output;
-	const int resultCode = ShellRunner::RawShell(command, input, &output, NULL, env);
+	const int resultCode = ShellRunner::RawShell(command, input, &output, NULL, env, true, wxEmptyString, silent);
     if ( resultCode == -1) return wxEmptyString; // exec failed
 
 	wxString outputStr;

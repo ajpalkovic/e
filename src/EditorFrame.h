@@ -60,6 +60,7 @@ class DiffPanel;
 class IEditorSearch;
 class RemoteThread;
 class SnippetList;
+class CommandPane;
 
 
 class EditorFrame : public KeyHookable<wxFrame>,
@@ -114,6 +115,7 @@ public:
 		MENU_INCOMMING_TOOLBAR,
 		MENU_SHOWPROJECT,
 		MENU_SHOWSYMBOLS,
+		MENU_SHOWCOMMANDPANE,
 		MENU_SHOWSNIPPETS,
 		MENU_SHIFT_PROJECT_FOCUS,
 		MENU_PREVIEW,
@@ -270,6 +272,11 @@ public:
 	void ShowSymbolList(bool keepOpen=true);
 	virtual void CloseSymbolList();
 
+	// Command Pane (pane)
+	void ShowCommandPane();
+	virtual void CloseCommandPane();
+	CommandPane* GetCommandPane() { return m_commandPane; }
+
 	// Snippet List (pane)
 	void ShowSnippetList();
 	virtual void CloseSnippetList();
@@ -415,6 +422,7 @@ private:
 	void OnMenuCommit(wxCommandEvent& event);
 	void OnMenuShowProject(wxCommandEvent& event);
 	void OnMenuShowSymbols(wxCommandEvent& event);
+	void OnMenuShowCommandPane(wxCommandEvent& event);
 	void OnMenuShowSnippets(wxCommandEvent& event);
 	void OnMenuSymbols(wxCommandEvent& event);
 	void OnMenuRevisionHistory(wxCommandEvent& event);
@@ -531,6 +539,7 @@ private:
 	SymbolList* m_symbolList;
 	FindInProjectDlg* m_findInProjectDlg;
 	SnippetList* m_snippetList;
+	CommandPane* m_commandPane;
 
 	// Statusbar
 	StatusBar* m_pStatBar;

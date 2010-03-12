@@ -69,6 +69,7 @@
 #include "eauibook.h"
 #include "DiffDirPane.h"
 #include "SnippetList.h"
+#include "CommandPane.h"
 
 #ifdef __WXMSW__
 // For multi-monitor-aware position restore on Windows, include WinUser.h
@@ -168,6 +169,7 @@ BEGIN_EVENT_TABLE(EditorFrame, wxFrame)
 	EVT_MENU(MENU_SHIFT_PROJECT_FOCUS, EditorFrame::OnShiftProjectFocus)
 	EVT_MENU(MENU_SHOWSYMBOLS, EditorFrame::OnMenuShowSymbols)
 	EVT_MENU(MENU_SHOWSNIPPETS, EditorFrame::OnMenuShowSnippets)
+	EVT_MENU(MENU_SHOWCOMMANDPANE, EditorFrame::OnMenuShowCommandPane)
 	EVT_MENU(MENU_REVHIS, EditorFrame::OnMenuRevisionHistory)
 	EVT_MENU(MENU_UNDOHIS, EditorFrame::OnMenuUndoHistory)
 	EVT_MENU(MENU_COMMANDOUTPUT, EditorFrame::OnMenuShowCommandOutput)
@@ -300,7 +302,7 @@ EditorFrame::EditorFrame(CatalystWrapper cat, unsigned int frameId,  const wxStr
 
 	m_sizeChanged(false), m_needStateSave(true), m_keyDiags(false), m_inAskReload(false),
 	m_changeCheckerThread(NULL), editorCtrl(0), m_recentFilesMenu(NULL), m_recentProjectsMenu(NULL), m_bundlePane(NULL), m_diffPane(NULL),
-	m_symbolList(NULL), m_findInProjectDlg(NULL), m_pStatBar(NULL), m_snippetList(NULL),
+	m_symbolList(NULL), m_findInProjectDlg(NULL), m_pStatBar(NULL), m_snippetList(NULL), m_commandPane(NULL),
 	m_previewDlg(NULL), m_ctrlHeldDown(false), m_lastActiveTab(0), m_showGutter(true), m_showIndent(false),
 	bitmap(1,1)
 	//,m_incommingBmp(incomming_xpm), m_incommingFullBmp(incomming_full_xpm)
@@ -603,6 +605,7 @@ void EditorFrame::InitMenus() {
 	//viewMenu->Append(MENU_INCOMMING, _("&Incoming\tF2"), _("Show Incomming Documents"), wxITEM_CHECK);
 	//viewMenu->Check(MENU_INCOMMING, true);
 	viewMenu->Append(MENU_SHOWSYMBOLS, _("&Symbol List\tCtrl+Alt+L"), _("Show Symbol List"), wxITEM_CHECK);
+	viewMenu->Append(MENU_SHOWCOMMANDPANE, _("&Command Pane"), _("Show Command Pane"), wxITEM_CHECK);
 	viewMenu->Append(MENU_SHOWSNIPPETS, _("&Snippet List\tCtrl+Alt+S"), _("Show Snippet List"), wxITEM_CHECK);
 	viewMenu->Append(MENU_REVHIS, _("&Revision History\tF6"), _("Show Revision History"), wxITEM_CHECK);
 	viewMenu->Check(MENU_REVHIS, true);
@@ -825,6 +828,13 @@ void EditorFrame::RestoreState() {
 		bool showsnippets = false;
 		m_settings.GetSettingBool(wxT("showsnippets"), showsnippets);
 		if (showsnippets) ShowSnippetList();
+	}
+
+	// Check if we should show command pane
+	{
+		bool showCommandPane = false;
+		m_settings.GetSettingBool(wxT("showcommandpane"), showCommandPane);
+		if (showCommandPane) ShowCommandPane();
 	}
 
 #endif // __WXMSW__
@@ -2149,6 +2159,10 @@ void EditorFrame::OnOpeningMenu(wxMenuEvent& WXUNUSED(event)) {
 	wxMenuItem* slItem = GetMenuBar()->FindItem(MENU_SHOWSYMBOLS);
 	if (slItem) slItem->Check(m_symbolList != NULL);
 
+	// "Show Command Pane"
+	wxMenuItem* cpItem = GetMenuBar()->FindItem(MENU_SHOWCOMMANDPANE);
+	if (cpItem) cpItem->Check(m_commandPane != NULL);
+
 	// "Show Snippet List"
 	wxMenuItem* snItem = GetMenuBar()->FindItem(MENU_SHOWSNIPPETS);
 	if (snItem) snItem->Check(m_snippetList != NULL);
@@ -3171,6 +3185,11 @@ void EditorFrame::OnMenuShowSymbols(wxCommandEvent& event) {
 	else CloseSymbolList();
 }
 
+void EditorFrame::OnMenuShowCommandPane(wxCommandEvent& event) {
+	if (event.IsChecked()) ShowCommandPane();
+	else CloseCommandPane();
+}
+
 void EditorFrame::OnMenuShowSnippets(wxCommandEvent& event) {
 	if (event.IsChecked()) ShowSnippetList();
 	else CloseSnippetList();
@@ -3285,6 +3304,43 @@ void EditorFrame::CloseSnippetList() {
 	m_frameManager.Update();
 }
 
+void EditorFrame::ShowCommandPane() {
+	if (m_commandPane) return; // already shown
+	
+	// Create the pane
+	m_commandPane = new CommandPane(this);
+	wxAuiPaneInfo paneInfo;
+	paneInfo.Name(wxT("Command Pane")).Right().Caption(_("Command Pane")).BestSize(wxSize(150,50)); // defaults
+
+	// Load pane settings
+	wxString panePerspective;
+	m_settings.GetSettingString(wxT("command_pane"), panePerspective);
+	m_settings.SetSettingBool(wxT("showcommandpane"), true);
+	if (!panePerspective.empty()) m_frameManager.LoadPaneInfo(panePerspective, paneInfo);
+
+	// Add to manager
+	m_frameManager.AddPane(m_commandPane, paneInfo);
+	m_frameManager.Update();
+}
+
+void EditorFrame::CloseCommandPane() {
+	if (!m_commandPane) return; // already closed
+
+	wxAuiPaneInfo& pane = m_frameManager.GetPane(m_commandPane);
+
+	// Save pane settings
+	const wxString panePerspective = m_frameManager.SavePaneInfo(pane);
+	m_settings.SetSettingString(wxT("command_pane"), panePerspective);
+	m_settings.SetSettingBool(wxT("showcommandpane"), false);
+
+	// Delete the snippet pane
+	m_frameManager.DetachPane(m_commandPane);
+	m_commandPane->Hide();
+	m_commandPane->Destroy();
+	m_commandPane = NULL;
+	m_frameManager.Update();
+}
+
 void EditorFrame::RefreshSnippetList() {
 	if (!m_snippetList) return;
 	m_snippetList->UpdateList();
@@ -3338,6 +3394,13 @@ void EditorFrame::OnPaneClose(wxAuiManagerEvent& event) {
 	}
 	else if (event.GetPane()->window == m_symbolList) {
 		CloseSymbolList();
+
+		// We have already deleted the window
+		// so we don't want aui to do any close handling
+		event.Veto();
+	}
+	else if (event.GetPane()->window == m_commandPane) {
+		CloseCommandPane();
 
 		// We have already deleted the window
 		// so we don't want aui to do any close handling
@@ -3682,6 +3745,16 @@ void EditorFrame::SaveState() {
 		const wxString panePerspective = m_frameManager.SavePaneInfo(pane);
 		m_settings.SetSettingString(wxT("symbol_pane"), panePerspective);
 		m_settings.SetSettingBool(wxT("showsymbols"), true);
+	}
+
+	// Save command pane layout
+	if (m_commandPane) {
+		wxAuiPaneInfo& pane = m_frameManager.GetPane(m_commandPane);
+
+		// Save pane settings
+		const wxString panePerspective = m_frameManager.SavePaneInfo(pane);
+		m_settings.SetSettingString(wxT("command_pane"), panePerspective);
+		m_settings.SetSettingBool(wxT("showcommandpane"), true);
 	}
 
 	// Save snippet list layout

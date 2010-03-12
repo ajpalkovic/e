@@ -1182,6 +1182,22 @@
 			>
 		</File>
 		<File
+			RelativePath=".\CommandPane.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CommandPane.h"
+			>
+		</File>
+		<File
+			RelativePath=".\CommandThread.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CommandThread.h"
+			>
+		</File>
+		<File
 			RelativePath="CrashFileNames.h"
 			>
 		</File>

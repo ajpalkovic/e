@@ -16,14 +16,23 @@
 
 #include "wx/wxprec.h"
 #ifndef WX_PRECOMP
-	#include <wx/panel.h>
-    #include <wx/textctrl.h>
+#include <wx/wx.h>
 #endif
 
 #include <vector>
+#include "CommandThread.h"
 
 class EditorFrame;
 class CommandPaneThread;
+
+class ErrorMessage {
+public:
+	ErrorMessage(wxString& output, interval& filenameInterval, interval& lineNumberInterval, interval& errorInterval, interval& messageInterval);
+	bool Matches(wxFileName& file);
+	unsigned int lineNumber;
+	wxString filename, message;
+	bool isError;
+};
 
 class CommandPane : public wxPanel {
 public:
@@ -31,6 +40,7 @@ public:
 	bool Destroy();
 	void OnFileSaved();
 	void UpdateOutput(wxString& output);
+	void GetErrors(std::vector<ErrorMessage>& errors, EditorCtrl& editor);
 
 private:
 	void OnIdle(wxIdleEvent& event);
@@ -38,16 +48,20 @@ private:
 
 	bool m_keepOpen, m_outputChanged, m_needBuild;
 	wxString* m_output;
+	std::vector<ErrorMessage> m_errors;
 	
-	wxStaticText* m_outputTextCtrl;
+	wxStaticText* m_staticTextCtrl;
 	CommandPaneThread* m_thread;
+	wxMutex mutex;
 };
 
 class CommandPaneThread : public CommandThread {
 public:
-	CommandPaneThread(CommandPane& pane);
+	CommandPaneThread(CommandPane& pane, bool* shouldExecute);
 	void Notify(wxString& output);
 private:
 	CommandPane& m_pane;
-}
+	wxMutex* mutex;
+};
+
 #endif // __COMMANDPANE_H__

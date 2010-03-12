@@ -20,20 +20,24 @@
 #endif
 
 #include <vector>
+#include "Env.h"
+#include "ShellRunner.h"
 
 class CommandThread : public wxThread {
 public:
-	CommandThread(wxString& command, cxEnv& env, bool* shouldExecute);
+	CommandThread(wxString& command, cxEnv* env, bool* shouldExecute);
 	CommandThread(bool* shouldExecute);
 	
-	virtual void Notify(wxString& output) {}
-	void UpdateCommand(wxString& command, cxEnv& env);
-	int Execute();
+	virtual void Notify(wxString& WXUNUSED(output)) {}
+	void UpdateCommand(wxString& command, cxEnv* env);
 	void* Entry();
 private:
 	bool* m_shouldExecute;
 	bool ready;
-	std::vector<char> m_command;
-	cxEnv m_env;
+	std::vector<char>* m_command;
+	cxEnv* m_env;
 	ShellRunner shell;
+	wxMutex mutex;
 };
+
+#endif
