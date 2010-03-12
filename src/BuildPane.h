@@ -11,33 +11,33 @@
  *
  ******************************************************************************/
 
-#ifndef __COMMANDTHREAD_H__
-#define __COMMANDTHREAD_H__
+#ifndef __BUILDPANE_H__
+#define __BUILDPANE_H__
 
 #include "wx/wxprec.h"
 #ifndef WX_PRECOMP
-	#include <wx/event.h>
+#include <wx/wx.h>
 #endif
 
 #include <vector>
-#include "Env.h"
-#include "ShellRunner.h"
 
-class CommandThread : public wxThread {
+class EditorFrame;
+class BuildErrorsManager;
+
+class BuildPane : public wxPanel {
 public:
-	CommandThread(wxString& command, cxEnv* env, bool* shouldExecute);
-	CommandThread(bool* shouldExecute);
-	
-	virtual void Notify(wxString& WXUNUSED(output)) {}
-	void UpdateCommand(wxString& command, cxEnv* env);
-	void* Entry();
+	BuildPane(EditorFrame* editorFrame, BuildErrorsManager* errorManager, bool keepOpen=true);
+	bool Destroy();
+
 private:
-	bool* m_shouldExecute;
-	bool ready;
-	std::vector<char>* m_command;
-	cxEnv* m_env;
-	ShellRunner shell;
-	wxMutex mutex;
+	void OnIdle(wxIdleEvent& event);
+	DECLARE_EVENT_TABLE();
+
+	bool m_keepOpen;
+	int m_outputLastUpdated;
+	BuildErrorsManager* m_errorManager;
+	
+	wxStaticText* m_staticTextCtrl;
 };
 
-#endif
+#endif // __BUILDPANE_H__

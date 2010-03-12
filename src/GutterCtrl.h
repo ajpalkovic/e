@@ -24,10 +24,11 @@ struct tmTheme;
 struct cxFold;
 class EditorCtrl;
 class dc;
+class BuildErrorsManager;
 
 class GutterCtrl : public wxControl {
 public:
-	GutterCtrl(EditorCtrl& parent, wxWindowID id);
+	GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxWindowID id);
 	void UpdateTheme(bool forceRecalculateDigitWidth=false);
 
 	void SetGutterRight(bool doMove=true);
@@ -53,6 +54,7 @@ private:
 
 	// Member variables
 	EditorCtrl& m_editorCtrl;
+	BuildErrorsManager* m_errorManager;
 	wxMemoryDC m_mdc;
 	wxBitmap m_bitmap;
 	int m_max_digits;

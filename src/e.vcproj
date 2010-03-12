@@ -1101,6 +1101,50 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="BuildErrors"
+			>
+			<File
+				RelativePath=".\BuildError.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildError.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildErrorsManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildErrorsManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildPane.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildPane.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildSettings.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildSettings.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildThread.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="application.ico"
 			>
@@ -1179,22 +1223,6 @@
 		</File>
 		<File
 			RelativePath="Colours.h"
-			>
-		</File>
-		<File
-			RelativePath=".\CommandPane.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\CommandPane.h"
-			>
-		</File>
-		<File
-			RelativePath=".\CommandThread.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\CommandThread.h"
 			>
 		</File>
 		<File

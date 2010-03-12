@@ -15,7 +15,7 @@
 #include "Fold.h"
 #include "tmTheme.h"
 #include "EditorCtrl.h"
-#include "CommandPane.h"
+#include "BuildErrorsManager.h"
 
 #ifndef WX_PRECOMP
 #include <wx/dc.h>
@@ -40,9 +40,9 @@ BEGIN_EVENT_TABLE(GutterCtrl, wxControl)
 	EVT_MOUSE_CAPTURE_LOST(GutterCtrl::OnCaptureLost)
 END_EVENT_TABLE()
 
-GutterCtrl::GutterCtrl(EditorCtrl& parent, wxWindowID id): 
+GutterCtrl::GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxWindowID id): 
 	wxControl(&parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxCLIP_CHILDREN|wxNO_FULL_REPAINT_ON_RESIZE),
-	m_editorCtrl(parent), 
+	m_editorCtrl(parent), m_errorManager(errorManager), 
 	m_mdc(), m_bitmap(1,1), m_width(0), m_gutterLeft(true), 
 	m_showBookmarks(true), 
 	m_showFolds(true), m_currentFold(NULL), m_posBeforeFoldClick(-1),
@@ -216,9 +216,6 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 	const vector<cxBookmark>& bookmarks = m_editorCtrl.GetBookmarks();
 	vector<cxBookmark>::const_iterator nextBookmark = bookmarks.begin();
 	while(nextBookmark != bookmarks.end() && nextBookmark->line_id < firstline) ++nextBookmark;
-	
-	std::vector<ErrorMessage> errors;
-	m_editorCtrl.GetErrors(errors);
 
 	// Draw each line
 	for (unsigned int i = firstline; i < linecount; ++i) {
@@ -247,10 +244,8 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 		}
 
 		// Draw errors
-		for(unsigned int c = 0; c < errors.size(); c++) {
-			if(errors[c].lineNumber == i+1) {
-				m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
-			}
+		if(m_errorManager->HasError(m_editorCtrl, i+1)) {
+			m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
 		}
 
 		// Draw the line number

@@ -358,8 +358,6 @@ public:
 
 	// Theme
 	const tmTheme& GetTheme() const { return m_theme; };
-	
-	void GetErrors(std::vector<ErrorMessage>& errors);
 
 #ifdef __WXDEBUG__
 	void Print();

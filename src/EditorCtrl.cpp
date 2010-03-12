@@ -45,7 +45,6 @@
 #include "IAppPaths.h"
 #include "Strings.h"
 #include "ReplaceStringParser.h"
-#include "CommandPane.h"
 
 // Document Icons
 #include "document.xpm"
@@ -410,7 +409,7 @@ void EditorCtrl::Init() {
 	if (!doShowMargin) m_wrapAtMargin = false;
 
 	// Initialize gutter (line numbers)
-	m_gutterCtrl = new GutterCtrl(*this, wxID_ANY);
+	m_gutterCtrl = new GutterCtrl(*this, m_parentFrame.GetBuildErrorsManager(), wxID_ANY);
 	m_gutterCtrl->Hide();
 	m_showGutter = false;
 	m_gutterLeft = true; // left side is default
@@ -892,12 +891,6 @@ bool EditorCtrl::UpdateScrollbars(unsigned int x, unsigned int y) {
 	}
 
 	return false; // no scrollbar was added or removed
-}
-
-void EditorCtrl::GetErrors(std::vector<ErrorMessage>& errors) {
-	CommandPane* pane = m_parentFrame.GetCommandPane();
-	if(pane == NULL) return;
-	pane->GetErrors(errors, *this);
 }
 
 void EditorCtrl::DrawLayout(bool isScrolling) {
