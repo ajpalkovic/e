@@ -68,6 +68,16 @@ GutterCtrl::GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxW
 	SetCursor(*wxSTANDARD_CURSOR);
 }
 
+void GutterCtrl::DrawCircleBitMap(wxMemoryDC& mdc, wxColour& color, wxColor& borderColor, wxBitmap& bitmap) {
+	bitmap = wxBitmap(10, 10);
+	mdc.SelectObject(bitmap);
+	mdc.SetBackground(wxBrush(m_theme.gutterColor));
+	mdc.Clear();
+	mdc.SetBrush(color);
+	mdc.SetPen(borderColor);
+	mdc.DrawCircle(5,5,5);
+}
+
 void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
 	const bool hasNewFont = m_mdc.GetFont() != m_theme.font;
 
@@ -95,6 +105,10 @@ void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
 		m_edgecolor.Set(wxMax(0,red-100), wxMax(0,green-100), wxMax(0,blue-100)); // Pastel purple (darker)
 		m_numbercolor.Set(wxMax(0,red-140), wxMax(0,green-140), wxMax(0,blue-140)); // Pastel purple (even darker)
 	}
+	m_errorColor.Set(213, 28, 28);
+	m_errorBorderColor.Set(163, 21, 21);
+	m_warningColor.Set(234, 234, 34);
+	m_warningBorderColor.Set(206, 206, 19);
 	m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
 
 	wxMemoryDC mdc;
@@ -119,12 +133,11 @@ void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
 	mdc.DrawLine(4, 2, 4, 7);
 
 	// Draw bookmark
-	m_bmBookmark = wxBitmap(10, 10);
-	mdc.SelectObject(m_bmBookmark);
-	mdc.SetBackground(wxBrush(m_theme.gutterColor));
-	mdc.Clear();
-	mdc.SetBrush(m_edgecolor);
-	mdc.DrawCircle(5,5,5);
+	DrawCircleBitMap(mdc, m_edgecolor, m_edgecolor, m_bmBookmark);
+
+	// Draw Error/Warning Circles
+	DrawCircleBitMap(mdc, m_errorColor, m_errorBorderColor, m_bmError);
+	DrawCircleBitMap(mdc, m_warningColor, m_warningBorderColor, m_bmWarning);
 }
 
 unsigned GutterCtrl::CalcLayout(unsigned int height) {
@@ -245,8 +258,10 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 
 		// Draw errors
 		if(m_errorManager->HasError(m_editorCtrl, i+1)) {
-			m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
-		}
+			m_mdc.DrawBitmap(m_bmError, 2, ypos + line_middle - 5);
+		} else if(m_errorManager->HasWarning(m_editorCtrl, i+1)) {
+			m_mdc.DrawBitmap(m_bmWarning, 2, ypos + line_middle - 5);
+		} 
 
 		// Draw the line number
 		m_mdc.DrawText(number, m_numberX, ypos);

@@ -71,8 +71,8 @@ BuildSettings BuildErrorsManager::GetBuildSettings() {
 	if(m_settingsSet && !m_settingsChanged) return m_settings;
 	
 	m_settings = BuildSettings(wxString(wxT("tail -n 50 /cygdrive/c/Dev/errors.txt")));
-	m_settings.SetErrorRegex(wxString(_("[0-9]*>\\s*([^\\(\\)]*)\\(([0-9]*)\\)\\s*:\\s*(error|warning)(.*)")), 1, 2, -1, 4, 3);
-	m_settings.SetWarningRegex(wxString(_("[0-9]*>\\s*([^\\(\\)]*)\\(([0-9]*)\\)\\s*:\\s*(error|warning)(.*)")), 1, 2, -1, 4, 3);
+	m_settings.SetErrorRegex(wxString(_("[0-9]*>\\s*([^\\(\\)]*)\\(([0-9]*)\\)\\s*:\\s*\"fatal \"?(error)(.*)")), 1, 2, -1, 4, 3);
+	m_settings.SetWarningRegex(wxString(_("[0-9]*>\\s*([^\\(\\)]*)\\(([0-9]*)\\)\\s*:\\s*(warning)(.*)")), 1, 2, -1, 4, 3);
 	
 	m_settingsSet = true;
 	m_settingsChanged = false;
@@ -99,33 +99,38 @@ void BuildErrorsManager::OnFileSaved() {
 	m_needBuild = true;
 }
 
+void BuildErrorsManager::ParseErrors(BuildSettings& settings, std::vector<BuildError>& errors, wxString& buildOutput, std::vector<char>& buildOutputVector, const char* regex) {
+	//can i do m_errors = errors?
+	//when i call .push_back is the BuildError copied?
+	//if i do the assignment do the BuildError objects get copied again?
+	
+	unsigned int pos = 0;
+	while(pos < buildOutput.length()) {
+		map<unsigned int, interval> matches;
+		search_result sr = EditorCtrl::RawRegexSearch(regex, buildOutputVector, pos, &matches);
+		BuildError error(buildOutput, matches, settings.error);
+	
+		wxLogDebug(wxT("File: %s\n Line: %d\n Message: %s\n"), error.filename, error.lineNumber, error.message);
+		errors.push_back(error);
+	
+		//avoid infinite loop on non-matches
+		if(sr.end == pos) sr.end++;
+		pos = sr.end;
+	}
+}
+
 void BuildErrorsManager::BuildComplete(wxString& buildOutput) {
 	//create a copy of BuildSettings so that we can do the regex search without locking the mutex
 	BuildSettings settings = GetBuildSettings();
 	
-	unsigned int pos = 0;
 	std::vector<BuildError> errors;
 	std::vector<char> buildOutputVector;
 	for(unsigned int c = 0; c < buildOutput.length(); c++) {
 		buildOutputVector.push_back(buildOutput[c]);
 	}
 	
-	//can i do m_errors = errors?
-	//when i call .push_back is the BuildError copied?
-	//if i do the assignment do the BuildError objects get copied again?
-	
-	while(pos < buildOutput.length()) {
-		map<unsigned int, interval> matches;
-		search_result sr = EditorCtrl::RawRegexSearch("[0-9]*>\\s*([^\\(\\)]*)\\(([0-9]*)\\)\\s*:\\s*(error|warning)(.*)", buildOutputVector, pos, &matches);
-		BuildError error(buildOutput, matches, settings.error);
-		
-		wxLogDebug(wxT("File: %s\n Line: %d\n Message: %s\n"), error.filename, error.lineNumber, error.message);
-		errors.push_back(error);
-		
-		//avoid infinite loop on non-matches
-		if(sr.end == pos) sr.end++;
-		pos = sr.end;
-	}
+	ParseErrors(settings, errors, buildOutput, buildOutputVector, "[0-9]*>\\s*([^\\(\\) \\n]*)\\(([0-9]*)\\)\\s*:\\s*(fatal error|error)(.*)");
+	ParseErrors(settings, errors, buildOutput, buildOutputVector, "[0-9]*>\\s*([^\\(\\) \\n]*)\\(([0-9]*)\\)\\s*:\\s*(warning)(.*)");
 	
 	//now secure the mutex and update the instance variables
 	wxMutexLocker lock(m_mutex);
@@ -148,7 +153,17 @@ bool BuildErrorsManager::HasError(EditorCtrl& editor, unsigned int line) {
 		ProcessEditorErrors(editor);
 	}
 	m_editorErrorsLastUpdated[id] = m_outputLastChanged;
-	return m_editorErrors[id].find(line) !=  m_editorErrors[id].end();
+	return m_editorErrors[id].find(line) !=  m_editorErrors[id].end() && m_editorErrors[id][line]->isError;
+}
+
+bool BuildErrorsManager::HasWarning(EditorCtrl& editor, unsigned int line) {
+	wxMutexLocker lock(m_mutex);
+	unsigned int id = editor.GetDocID().document_id;
+	if(m_editorErrorsLastUpdated.find(id) == m_editorErrorsLastUpdated.end() || m_editorErrorsLastUpdated[id] < m_outputLastChanged) {
+		ProcessEditorErrors(editor);
+	}
+	m_editorErrorsLastUpdated[id] = m_outputLastChanged;
+	return m_editorErrors[id].find(line) !=  m_editorErrors[id].end() && !m_editorErrors[id][line]->isError;
 }
 
 void BuildErrorsManager::ProcessEditorErrors(EditorCtrl& editor) {

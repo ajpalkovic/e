@@ -45,10 +45,12 @@ public:
 	bool ShouldBuild();
 	void PerformBuild();
 	void BuildComplete(wxString& output);
+	void ParseErrors(BuildSettings& settings, std::vector<BuildError>& errors, wxString& buildOutput, std::vector<char>& buildOutputVector, const char* regex);
 	
 	void OnFileSaved();
 	
 	bool HasError(EditorCtrl& editor, unsigned int line);
+	bool HasWarning(EditorCtrl& editor, unsigned int line);
 private:
 	void ProcessEditorErrors(EditorCtrl& editor);
 	

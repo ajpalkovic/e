@@ -26,7 +26,8 @@
 #include "Env.h"
 
 enum {
-	CTRL_OUTPUT
+	CTRL_OUTPUT,
+	CTRL_WINDOW
 };
 
 BEGIN_EVENT_TABLE(BuildPane, wxPanel)
@@ -38,7 +39,6 @@ BuildPane::BuildPane(EditorFrame* editorFrame, BuildErrorsManager* errorManager,
 	m_keepOpen(keep_open), m_errorManager(errorManager), m_outputLastUpdated(0) {
 	
 	m_staticTextCtrl = new wxStaticText(this, CTRL_OUTPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize);
-	
 	wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
 		mainSizer->Add(m_staticTextCtrl, 0, wxEXPAND);
 

@@ -30,6 +30,7 @@ class GutterCtrl : public wxControl {
 public:
 	GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxWindowID id);
 	void UpdateTheme(bool forceRecalculateDigitWidth=false);
+	void DrawCircleBitMap(wxMemoryDC& mdc, wxColour& color, wxColor& borderColor, wxBitmap& bitmap);
 
 	void SetGutterRight(bool doMove=true);
 
@@ -69,6 +70,7 @@ private:
 	wxBitmap m_bmBookmark;
 	wxBitmap m_bmFoldOpen;
 	wxBitmap m_bmFoldClosed;
+	wxBitmap m_bmError, m_bmWarning;
 	const cxFold* m_currentFold;
 	int m_posBeforeFoldClick;
 
@@ -76,6 +78,8 @@ private:
 	wxColour m_numbercolor;
 	wxColour m_edgecolor;
 	wxColour m_hlightcolor;
+	wxColour m_errorColor, m_warningColor;
+	wxColour m_errorBorderColor, m_warningBorderColor;
 
 	int m_currentSel;
 	bool m_sel_startoutside;
