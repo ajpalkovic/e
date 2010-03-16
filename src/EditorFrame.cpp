@@ -2508,6 +2508,7 @@ void EditorFrame::OnMenuOpenRecentProject(wxCommandEvent& event) {
 void EditorFrame::OnMenuSave(wxCommandEvent& WXUNUSED(event)) {
 	editorCtrl->SaveText();
 	UpdateWindowTitle();
+	m_errorManager->OnFileSaved(editorCtrl);
 }
 
 void EditorFrame::OnMenuSaveAs(wxCommandEvent& WXUNUSED(event)) {
@@ -2520,10 +2521,12 @@ void EditorFrame::OnMenuSaveAs(wxCommandEvent& WXUNUSED(event)) {
 		m_generalSettings.AddRecentFile(path);
 		UpdateRecentFiles();
 	}
+	m_errorManager->OnFileSaved(editorCtrl);
 }
 
 void EditorFrame::OnMenuSaveAll(wxCommandEvent& WXUNUSED(event)) {
 	// Save all files that are modified
+	std::vector<EditorCtrl*> editors;
 	for (unsigned int i = 0; i < m_tabBar->GetPageCount(); ++i) {
 		EditorCtrl* page = GetEditorCtrlFromPage(i);
 		if (!page->IsModified()) continue;
@@ -2531,11 +2534,13 @@ void EditorFrame::OnMenuSaveAll(wxCommandEvent& WXUNUSED(event)) {
 		wxString path = page->GetPath();
 		if (path.empty()) continue;
 
+		editors.push_back(page);
 		page->SaveText();
 	}
 
 	UpdateWindowTitle();
 	UpdateTabs();
+	m_errorManager->OnFilesSaved(editors);
 }
 
 void EditorFrame::OnMenuPageSetup(wxCommandEvent& WXUNUSED(event)) {
@@ -3313,7 +3318,6 @@ void EditorFrame::ShowBuildPane() {
 	
 	// Create the pane
 	m_buildPane = new BuildPane(this, m_errorManager);
-	m_errorManager->OpenBuildPane(m_buildPane);
 	wxAuiPaneInfo paneInfo;
 	paneInfo.Name(wxT("Build Pane")).Right().Caption(_("Build Pane")).BestSize(wxSize(150,50)); // defaults
 
@@ -3343,7 +3347,6 @@ void EditorFrame::CloseBuildPane() {
 	m_buildPane->Hide();
 	m_buildPane->Destroy();
 	m_buildPane = NULL;
-	m_errorManager->CloseBuildPane();
 	m_frameManager.Update();
 }
 

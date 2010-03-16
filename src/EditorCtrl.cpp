@@ -6714,9 +6714,10 @@ wxString EditorCtrl::GetSelText() const {
 	return text;
 }
 
-void EditorCtrl::SetEnv(cxEnv& env, bool isUnix, const tmBundle* bundle) {
+void EditorCtrl::SetEnv(cxEnv& env, bool isUnix, const tmBundle* bundle, bool silent) {
 #ifdef __WXMSW__
-	if (isUnix) eDocumentPath::InitCygwin(true);
+	//This is not threadsafe.  InitCygwin could launch a dialog box inside of a thread.
+	if (isUnix && !silent) eDocumentPath::InitCygwin(true);
 #endif // __WXMSW__
 
 	// Load existing enviroment

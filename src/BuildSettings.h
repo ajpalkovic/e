@@ -24,22 +24,21 @@
 class BuildRegex {
 public:
 	BuildRegex() {}
-	BuildRegex(wxString& regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch);
+	BuildRegex(wxString& regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch, bool incrementLineNumbers);
 	wxString regex;
-	const char* regexArray;
 	int filenameMatch, lineMatch, columnMatch, messageMatch, errorMatch;
+	bool incrementLineNumbers;
 };
 
 class BuildSettings {
 public:
 	BuildSettings() {}
 	BuildSettings(wxString command);
-	void SetErrorRegex(wxString regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch);
-	void SetWarningRegex(wxString regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch);
+	void AddRegex(wxString regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch, bool incrementLineNumbers);
 	
 	wxString command;
 	std::vector<char> commandVector;
-	BuildRegex error, warning;
+	std::vector<BuildRegex> regexes;
 };
 
 #endif

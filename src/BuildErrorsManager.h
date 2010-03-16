@@ -18,12 +18,15 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
+#include "wx/filename.h"
 
 #include <vector>
 #include <map>
 
 #include "BuildSettings.h"
 #include "BuildError.h"
+
+#include "Env.h"
 
 class BuildPane;
 class BuildThread;
@@ -34,31 +37,31 @@ public:
 	BuildErrorsManager();
 	~BuildErrorsManager();
 	
-	void OpenBuildPane(BuildPane* pane);
-	void CloseBuildPane();
 	wxString& GetOutput(bool* outputChanged, int* lastPaneUpdate);
 	
 	BuildSettings GetBuildSettings();
 	void BuildSettingsChanged();
+
+	cxEnv GetEnv();
+	void UpdateEnv(EditorCtrl* editor);
 	
-	bool CanBuild();
 	bool ShouldBuild();
-	void PerformBuild();
 	void BuildComplete(wxString& output);
-	void ParseErrors(BuildSettings& settings, std::vector<BuildError>& errors, wxString& buildOutput, std::vector<char>& buildOutputVector, const char* regex);
+	void ParseErrors(std::vector<BuildError>& errors, wxString& buildOutput, std::vector<char>& buildOutputVector, BuildRegex& regex);
 	
-	void OnFileSaved();
+	void OnFileSaved(EditorCtrl* editor);
+	void OnFilesSaved(std::vector<EditorCtrl*> editors);
 	
 	bool HasError(EditorCtrl& editor, unsigned int line);
 	bool HasWarning(EditorCtrl& editor, unsigned int line);
 private:
 	void ProcessEditorErrors(EditorCtrl& editor);
 	
-	BuildPane* m_pane;
 	BuildThread* m_buildThread;
 	
 	bool m_settingsChanged, m_settingsSet;
 	BuildSettings m_settings;
+	cxEnv m_env;
 	
 	wxString m_output;
 	int m_outputLastChanged;
@@ -66,8 +69,10 @@ private:
 	bool m_needBuild;
 	
 	std::map<int, int> m_editorErrorsLastUpdated;
-	std::map<int, std::map<int, BuildError*>> m_editorErrors;
+	std::map<int, std::map<int, BuildErrorLine>> m_editorErrors;
 	std::vector<BuildError> m_errors;
+
+	std::vector<wxFileName> m_files;
 	
 	wxMutex m_mutex;
 };

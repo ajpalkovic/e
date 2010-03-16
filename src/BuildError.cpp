@@ -31,6 +31,10 @@ BuildError::BuildError(wxString& output, std::map<unsigned int, interval>& match
 		long num;
 		output.SubString(i.start, i.end-1).ToLong(&num);
 		lineNumber = (unsigned int) num;
+
+		if(regex.incrementLineNumbers) {
+			lineNumber++;
+		}
 	} else {
 		lineNumber = -1;
 	}
@@ -62,4 +66,15 @@ BuildError::BuildError(wxString& output, std::map<unsigned int, interval>& match
 
 bool BuildError::Matches(wxFileName& file) {
 	return file.SameAs(filename);
+}
+
+BuildErrorLine::BuildErrorLine() {
+	hasError = false;
+	hasWarning = false;
+}
+
+void BuildErrorLine::AddError(BuildError* error) {
+	hasError = hasError || error->isError;
+	hasWarning = hasWarning || !error->isError;
+	errors.push_back(error);
 }

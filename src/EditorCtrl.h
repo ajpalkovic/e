@@ -297,7 +297,7 @@ public:
 	void OnDragDropColumn(const wxArrayString& text, wxDragResult dragType);
 
 	// Shell
-	void SetEnv(cxEnv& env, bool isUnix=true, const tmBundle* bundle=NULL);
+	void SetEnv(cxEnv& env, bool isUnix=true, const tmBundle* bundle=NULL, bool silent=false);
 	void RunCurrentSelectionAsCommand(bool doReplace);
 
 	// Track if doc has been modified

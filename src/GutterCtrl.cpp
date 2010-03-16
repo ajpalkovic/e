@@ -17,10 +17,15 @@
 #include "EditorCtrl.h"
 #include "BuildErrorsManager.h"
 
+#include "images/error.xpm"
+#include "images/warning.xpm"
+
 #ifndef WX_PRECOMP
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #endif
+
+#define ErrorIconSize 16
 
 unsigned int _gutter_digits_in_number(unsigned int number) {
 	unsigned int count = 1; // minimum is one
@@ -49,6 +54,9 @@ GutterCtrl::GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxW
 	m_theme(m_editorCtrl.GetTheme()),
 	m_currentSel(-1)
 {
+	m_errorBitmap = wxBitmap(error_xpm);
+	m_warningBitmap = wxBitmap(warning_xpm);
+
 	m_mdc.SelectObject(m_bitmap);
 	if (!m_mdc.Ok()) wxLogError(wxT("wxMemoryDC() constructor was failed in creating!"));
 
@@ -66,16 +74,6 @@ GutterCtrl::GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxW
 
 	// Set to standard cursor (otherwise it will inherit from editorCtrl)
 	SetCursor(*wxSTANDARD_CURSOR);
-}
-
-void GutterCtrl::DrawCircleBitMap(wxMemoryDC& mdc, wxColour& color, wxColor& borderColor, wxBitmap& bitmap) {
-	bitmap = wxBitmap(10, 10);
-	mdc.SelectObject(bitmap);
-	mdc.SetBackground(wxBrush(m_theme.gutterColor));
-	mdc.Clear();
-	mdc.SetBrush(color);
-	mdc.SetPen(borderColor);
-	mdc.DrawCircle(5,5,5);
 }
 
 void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
@@ -105,10 +103,6 @@ void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
 		m_edgecolor.Set(wxMax(0,red-100), wxMax(0,green-100), wxMax(0,blue-100)); // Pastel purple (darker)
 		m_numbercolor.Set(wxMax(0,red-140), wxMax(0,green-140), wxMax(0,blue-140)); // Pastel purple (even darker)
 	}
-	m_errorColor.Set(213, 28, 28);
-	m_errorBorderColor.Set(163, 21, 21);
-	m_warningColor.Set(234, 234, 34);
-	m_warningBorderColor.Set(206, 206, 19);
 	m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
 
 	wxMemoryDC mdc;
@@ -133,11 +127,12 @@ void GutterCtrl::UpdateTheme(bool forceRecalculateDigitWidth) {
 	mdc.DrawLine(4, 2, 4, 7);
 
 	// Draw bookmark
-	DrawCircleBitMap(mdc, m_edgecolor, m_edgecolor, m_bmBookmark);
-
-	// Draw Error/Warning Circles
-	DrawCircleBitMap(mdc, m_errorColor, m_errorBorderColor, m_bmError);
-	DrawCircleBitMap(mdc, m_warningColor, m_warningBorderColor, m_bmWarning);
+	m_bmBookmark = wxBitmap(10, 10);
+	mdc.SelectObject(m_bmBookmark);
+	mdc.SetBackground(wxBrush(m_theme.gutterColor));
+	mdc.Clear();
+	mdc.SetBrush(m_edgecolor);
+	mdc.DrawCircle(5,5,5);
 }
 
 unsigned GutterCtrl::CalcLayout(unsigned int height) {
@@ -150,9 +145,10 @@ unsigned GutterCtrl::CalcLayout(unsigned int height) {
 	m_max_digits = digits;
 	m_width = m_digit_width*m_max_digits + 7;
 	m_numberX = 3;
-	if (m_showBookmarks) {
-		m_width += 10;
-		m_numberX += 10;
+	//TODO: Update this to check if they want to do auto compilation
+	if (true || m_showBookmarks) {
+		m_width += ErrorIconSize;
+		m_numberX += ErrorIconSize;
 	}
 	m_foldStartX = m_width;
 	if (m_showFolds) {
@@ -251,16 +247,18 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 		if (m_showBookmarks) {
 			if (nextBookmark != bookmarks.end() && nextBookmark->line_id == i) {
 				//m_mdc.DrawText(wxT("\u066D"), 3, ypos);
-				m_mdc.DrawBitmap(m_bmBookmark, 2, ypos + line_middle - 5);
+				m_mdc.DrawBitmap(m_bmBookmark, 2+ErrorIconSize-10, ypos + line_middle - 5);
 				++nextBookmark;
 			}
 		}
 
 		// Draw errors
 		if(m_errorManager->HasError(m_editorCtrl, i+1)) {
-			m_mdc.DrawBitmap(m_bmError, 2, ypos + line_middle - 5);
+			m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
+			m_mdc.DrawBitmap(m_errorBitmap, 2, ypos + line_middle - 8);
 		} else if(m_errorManager->HasWarning(m_editorCtrl, i+1)) {
-			m_mdc.DrawBitmap(m_bmWarning, 2, ypos + line_middle - 5);
+			m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
+			m_mdc.DrawBitmap(m_warningBitmap, 2, ypos + line_middle - 7);
 		} 
 
 		// Draw the line number

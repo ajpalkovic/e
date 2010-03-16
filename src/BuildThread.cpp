@@ -25,7 +25,6 @@
 
 #include "ShellRunner.h"
 #include "Env.h"
-//#include "eSettings.h"
 
 BuildThread::BuildThread(BuildErrorsManager* errorManager) : m_errorManager(errorManager) {
 	Create();
@@ -38,12 +37,10 @@ void* BuildThread::Entry() {
 		
 		if(m_errorManager->ShouldBuild()) {
 			wxLogDebug(wxT("!!!!!!!!!run command"));
-			m_errorManager->PerformBuild();
+			//These two are copied so there are no threading issues???
 			BuildSettings settings = m_errorManager->GetBuildSettings();
+			cxEnv env = m_errorManager->GetEnv();
 			
-			cxEnv env;
-			env.SetToCurrent();
-			//env.SetEnv(eGetSettings().env);
 			wxString output = shell.RunShellCommand(settings.commandVector, env, true);
 			
 			m_errorManager->BuildComplete(output);
