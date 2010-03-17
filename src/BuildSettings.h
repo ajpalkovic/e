@@ -21,10 +21,17 @@
 
 #include <vector>
 
+#include "jsonreader.h"
+#include "jsonwriter.h"
+
 class BuildRegex {
 public:
 	BuildRegex() {}
 	BuildRegex(wxString& regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch, bool incrementLineNumbers);
+	BuildRegex(wxJSONValue& root);
+
+	wxJSONValue ToJson();
+
 	wxString regex;
 	int filenameMatch, lineMatch, columnMatch, messageMatch, errorMatch;
 	bool incrementLineNumbers;
@@ -34,9 +41,12 @@ class BuildSettings {
 public:
 	BuildSettings() {}
 	BuildSettings(wxString command);
+	BuildSettings(wxJSONValue& root);
+
 	void AddRegex(wxString regex, int filenameMatch, int lineMatch, int columnMatch, int messageMatch, int errorMatch, bool incrementLineNumbers);
+	wxJSONValue ToJson();
 	
-	wxString command;
+	wxString command, name;
 	std::vector<char> commandVector;
 	std::vector<BuildRegex> regexes;
 };

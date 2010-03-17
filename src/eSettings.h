@@ -67,6 +67,7 @@ class eSettings: public ISettings {
 public:
 	eSettings();
 	
+	wxString& GetPath() { return m_path; }
 	void Load(const wxString& path);
 	bool Save();
 	bool IsEmpty() const;

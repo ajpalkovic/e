@@ -39,6 +39,8 @@ public:
 	
 	wxString& GetOutput(bool* outputChanged, int* lastPaneUpdate);
 	
+	void LoadSettings();
+	void SaveSettings();
 	BuildSettings GetBuildSettings();
 	void BuildSettingsChanged();
 
@@ -59,8 +61,10 @@ private:
 	
 	BuildThread* m_buildThread;
 	
-	bool m_settingsChanged, m_settingsSet;
-	BuildSettings m_settings;
+	BuildSettings* m_currentSettings;
+	std::vector<BuildSettings> m_settings;
+	wxString m_path;
+
 	cxEnv m_env;
 	
 	wxString m_output;
