@@ -17,7 +17,7 @@ endif
 
 ifeq ($(DEBUG),0)
 	ECORE    = ecore
-	CXXFLAGS = -O2
+	CXXFLAGS = -O2 -DLINUX
 	LDFLAGS  =
 	EXT_DIR  = $(ROOTDIR)/external/out.release
 	OUTDIR   = .objs.release
@@ -25,7 +25,7 @@ ifeq ($(DEBUG),0)
 	PKGSUFF  =
 else
 	ECORE    = ecored
-	CXXFLAGS = -O0 -g
+	CXXFLAGS = -O0 -g -DLINUX
 	LDFLAGS  = -g -z muldefs
 	EXT_DIR  = $(ROOTDIR)/external/out.debug
 	OUTDIR   = .objs.debug
@@ -83,7 +83,7 @@ $(EXE): $(OBJS)
 	$(SILENT)$(CXX) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS) $(EXTOBJS)
 
 $(OUTDIR)/%.o: %.cpp
-	@-mkdir -p $(OUTDIR)
+	@-mkdir -p $(OUTDIR)/webconnect
 	@$(ECHO) "[CC] $<"
 	$(SILENT)$(CXX) $(INCLUDES) $(CXXFLAGS) -c -o $@ $<
 

@@ -28,7 +28,7 @@
 class eApp;
 class RemoteProfile;
 
-enum SubPage {SP_MAIN=0, SP_LEFT, SP_RIGHT};
+enum SubPageE {SP_MAIN=0, SP_LEFT, SP_RIGHT};
 
 class eFrameSettings {
 public:
@@ -50,11 +50,11 @@ public:
 
 	// Pages
 	size_t GetPageCount() const;
-	void SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const vector<unsigned int>& folds, const vector<cxBookmark>& bookmarks, SubPage sp=SP_MAIN);
-	void GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned int>& folds, vector<unsigned int>& bookmarks, SubPage sp=SP_MAIN) const;
+	void SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const vector<unsigned int>& folds, const vector<cxBookmark>& bookmarks, SubPageE sp=SP_MAIN);
+	void GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned int>& folds, vector<unsigned int>& bookmarks, SubPageE sp=SP_MAIN) const;
 	bool IsPageDiff(size_t page_id) const;
-	wxString GetPagePath(size_t page_id, SubPage sp=SP_MAIN) const;
-	doc_id GetPageDoc(size_t page_id, SubPage sp=SP_MAIN) const;
+	wxString GetPagePath(size_t page_id, SubPageE sp=SP_MAIN) const;
+	doc_id GetPageDoc(size_t page_id, SubPageE sp=SP_MAIN) const;
 	void DeletePageSettings(size_t page_id);
 	void DeleteAllPageSettings();
 
@@ -66,11 +66,15 @@ private:
 
 class eSettings: public ISettings {
 public:
+    enum SubPage {SP_MAIN=0, SP_LEFT, SP_RIGHT}; 
 	eSettings();
 	
 	void Load(const wxString& path);
 	bool Save();
 	bool IsEmpty() const;
+	
+	void SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const std::vector<unsigned int, std::allocator<unsigned> >& folds, const std::vector<cxBookmark, std::allocator<cxBookmark> >& bookmarks, eSettings::SubPage sp=SP_MAIN);
+	void GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned>& folds, vector<unsigned>& bookmarks, eSettings::SubPage sp=SP_MAIN) const; 
 
 	// Get setting values
 	virtual bool GetSettingBool(const wxString& name, bool& value) const;
@@ -103,8 +107,8 @@ public:
 	void GetRecentProjects(wxArrayString& recentprojects) const;
 
 	// Recent Diffs
-	void AddRecentDiff(const wxString& path, SubPage sp);
-	void GetRecentDiffs(wxArrayString& recentprojectsh, SubPage sp) const;
+	void AddRecentDiff(const wxString& path, eSettings::SubPage sp);
+	void GetRecentDiffs(wxArrayString& recentprojectsh, eSettings::SubPage sp) const;
 
 	// Remote profiles
 	size_t GetRemoteProfileCount() const;

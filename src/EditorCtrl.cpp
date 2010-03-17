@@ -329,7 +329,7 @@ void EditorCtrl::RestoreSettings(unsigned int page_id, eFrameSettings& settings,
 
 	// Retrieve the page info
 	wxASSERT(0 <= page_id && page_id < (int)settings.GetPageCount());
-	settings.GetPageSettings(page_id, mirrorPath, di, newpos, topline, syntax, folds, bookmarks, (SubPage)subid);
+	settings.GetPageSettings(page_id, mirrorPath, di, newpos, topline, syntax, folds, bookmarks, (SubPageE)subid);
 
 	if (eDocumentPath::IsRemotePath(mirrorPath)) {
 		// If the mirror points to a remote file, we have to download it first.
@@ -519,7 +519,7 @@ void EditorCtrl::SaveSettings(unsigned int i, eFrameSettings& settings, unsigned
 	const wxString& syntax = GetSyntaxName();
 	const vector<unsigned int> folds = GetFoldedLines();
 
-	settings.SetPageSettings(i, path, di, pos, topline, syntax, folds, bookmarks.GetBookmarks(), (SubPage)subid);
+	settings.SetPageSettings(i, path, di, pos, topline, syntax, folds, bookmarks.GetBookmarks(), (SubPageE)subid);
 	//wxLogDebug(wxT("  %d (%d,%d,%d) pos:%d topline:%d"), i, di.type, di.document_id, di.version_id, pos, topline);
 }
 

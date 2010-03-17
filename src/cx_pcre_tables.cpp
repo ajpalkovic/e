@@ -50,7 +50,7 @@ clashes with the library. */
 
 #include "cx_pcre_internal.h"
 
-
+#ifndef LINUX
 /* Table of sizes for the fixed-length opcodes. It's defined in a macro so that
 the definition is next to the definition of the opcodes in pcre_internal.h. */
 
@@ -314,5 +314,5 @@ const ucp_type_table _pcre_utt[] = {
 const int _pcre_utt_size = sizeof(_pcre_utt)/sizeof(ucp_type_table);
 
 #endif  /* SUPPORT_UTF8 */
-
+#endif
 /* End of pcre_tables.c */

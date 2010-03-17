@@ -759,9 +759,9 @@ void EditorFrame::RestoreState() {
 		unsigned int sp = isDiff ? 1 : 0;
 		const unsigned int sp_end = isDiff ? 3 : 1; // diffs have both left and rightd
 		for (; sp < sp_end; ++sp) {
-			mirrorPath = m_settings.GetPagePath(i, (SubPage)sp);
+			mirrorPath = m_settings.GetPagePath(i, (SubPageE)sp);
 			if (mirrorPath.empty()) continue;
-			const doc_id mirrorDoc = m_settings.GetPageDoc(i, (SubPage)sp);
+			const doc_id mirrorDoc = m_settings.GetPageDoc(i, (SubPageE)sp);
 			
 			cxLOCK_READ(m_catalyst)
 				isMirrored = catalyst.VerifyMirror(mirrorPath, mirrorDoc);
@@ -2892,8 +2892,9 @@ void EditorFrame::UpdateRecentFiles() {
 
 	for (unsigned int i = 0; i < m_recentFiles.GetCount(); i++) {
 		wxString filename = m_recentFiles[i];
-		if (i < 9)
+		if (i < 9) {
 			filename = wxString::Format(wxT("&%d %s"), i+1, filename);
+		}
 		m_recentFilesMenu->Append(4000 + i, filename);
 	}
 

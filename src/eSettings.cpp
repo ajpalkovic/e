@@ -309,7 +309,7 @@ void eSettings::AddRecentProject(const wxString& path) {
 	AutoSave();
 }
 
-void eSettings::AddRecentDiff(const wxString& path, SubPage sp) {
+void eSettings::AddRecentDiff(const wxString& path, eSettings::SubPage sp) {
 	wxJSONValue& recentProjects = (sp == SP_LEFT) ? m_jsonRoot[wxT("recentDiffsLeft")] : m_jsonRoot[wxT("recentDiffsRight")];
 	AddToRecent(path, recentProjects, 10);
 	AutoSave();
@@ -325,7 +325,7 @@ void eSettings::GetRecentProjects(wxArrayString& recentprojects) const {
 	GetRecents(recents, recentprojects);
 }
 
-void eSettings::GetRecentDiffs(wxArrayString& recentdiffs, SubPage sp) const {
+void eSettings::GetRecentDiffs(wxArrayString& recentdiffs, eSettings::SubPage sp) const {
 	const wxJSONValue recents = m_jsonRoot.ItemAt((sp == SP_LEFT) ? wxT("recentDiffsLeft") : wxT("recentDiffsRight"));
 	GetRecents(recents, recentdiffs);
 }
@@ -818,7 +818,7 @@ size_t eFrameSettings::GetPageCount() const {
 	return pages.Size();
 }
 
-void eFrameSettings::SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const vector<unsigned int>& folds, const vector<cxBookmark>& bookmarks, SubPage sp) {
+void eFrameSettings::SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const vector<unsigned int>& folds, const vector<cxBookmark>& bookmarks, SubPageE sp) {
 	wxJSONValue& pages = m_jsonRoot.Item(wxT("pages"));
 	if (!pages.IsArray()) pages.SetType(wxJSONTYPE_ARRAY);
 
@@ -854,7 +854,7 @@ void eFrameSettings::SetPageSettings(size_t page_id, const wxString& path, doc_i
 	AutoSave();
 }
 
-void eFrameSettings::GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned int>& folds, vector<unsigned int>& bookmarks, SubPage sp) const {
+void eFrameSettings::GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned int>& folds, vector<unsigned int>& bookmarks, SubPageE sp) const {
 	const wxJSONValue pages = m_jsonRoot.ItemAt(wxT("pages"));
 	wxASSERT((int)page_id < pages.Size());
 	const wxJSONValue toppage = pages.ItemAt(page_id);
@@ -890,7 +890,7 @@ bool eFrameSettings::IsPageDiff(size_t page_id) const {
 	return page.HasMember(wxT("left"));
 }
 
-wxString eFrameSettings::GetPagePath(size_t page_id, SubPage sp) const {
+wxString eFrameSettings::GetPagePath(size_t page_id, SubPageE sp) const {
 	const wxJSONValue pages = m_jsonRoot.ItemAt(wxT("pages"));
 	wxASSERT((int)page_id < pages.Size());
 	const wxJSONValue toppage = pages.ItemAt(page_id);
@@ -900,7 +900,7 @@ wxString eFrameSettings::GetPagePath(size_t page_id, SubPage sp) const {
 	return page.ItemAt(wxT("path")).AsString();
 }
 
-doc_id eFrameSettings::GetPageDoc(size_t page_id, SubPage sp) const {
+doc_id eFrameSettings::GetPageDoc(size_t page_id, SubPageE sp) const {
 	const wxJSONValue pages = m_jsonRoot.ItemAt(wxT("pages"));
 	wxASSERT((int)page_id < pages.Size());
 	const wxJSONValue toppage = pages.ItemAt(page_id);
@@ -931,3 +931,76 @@ void eFrameSettings::DeletePageSettings(size_t page_id) {
 void eFrameSettings::AutoSave() {
 	eGetSettings().AutoSave();
 }
+
+
+
+
+
+
+
+void eSettings::SetPageSettings(size_t page_id, const wxString& path, doc_id di, int pos, int topline, const wxString& syntax, const std::vector<unsigned int, std::allocator<unsigned> >& folds, const std::vector<cxBookmark, std::allocator<cxBookmark> >& bookmarks, eSettings::SubPage sp) { 
+   wxJSONValue& pages = m_jsonRoot.Item(wxT("pages")); 
+   if (!pages.IsArray()) pages.SetType(wxJSONTYPE_ARRAY); 
+ 
+   wxASSERT((int)page_id <= pages.Size()); 
+   wxJSONValue& toppage = ((int)page_id == pages.Size()) ? pages.Append(wxJSONValue(wxJSONTYPE_OBJECT)) : pages[page_id]; 
+    
+   // With diffs we may have subpages 
+   wxJSONValue& page = (sp == SP_MAIN) ? toppage : ((sp == SP_LEFT) ? toppage[wxT("left")] : toppage[wxT("right")]); 
+ 
+   page.RemoveAll(); 
+   page[wxT("path")] = path; 
+   page[wxT("pos")] = pos; 
+   page[wxT("topline")] = topline; 
+   page[wxT("syntax")] = syntax; 
+ 
+   // doc_id 
+   page[wxT("doc_type")] = di.type; 
+   page[wxT("doc_doc")] = di.document_id; 
+   page[wxT("doc_version")] = di.version_id; 
+ 
+   // Set folds 
+   wxJSONValue& foldsArray = page[wxT("folds")]; 
+   if (!foldsArray.IsArray()) foldsArray.SetType(wxJSONTYPE_ARRAY); 
+   for (vector<unsigned>::const_iterator p = folds.begin(); p != folds.end(); ++p) { 
+      foldsArray.Append(*p); 
+   } 
+ 
+   // Set bookmarks 
+   wxJSONValue& bookmarksArray = page[wxT("bookmarks")]; 
+   if (!bookmarksArray.IsArray()) bookmarksArray.SetType(wxJSONTYPE_ARRAY); 
+   for (vector<cxBookmark>::const_iterator b = bookmarks.begin(); b != bookmarks.end(); ++b) { 
+      bookmarksArray.Append(b->line_id); 
+   } 
+} 
+ 
+void eSettings::GetPageSettings(size_t page_id, wxString& path, doc_id& di, int& pos, int& topline, wxString& syntax, vector<unsigned>& folds, vector<unsigned>& bookmarks, eSettings::SubPage sp) const { 
+   const wxJSONValue pages = m_jsonRoot.ItemAt(wxT("pages")); 
+   wxASSERT((int)page_id < pages.Size()); 
+   const wxJSONValue toppage = pages.ItemAt(page_id); 
+ 
+   // With diffs we may have subpages 
+   const wxJSONValue page = (sp == SP_MAIN) ? toppage : ((sp == SP_LEFT) ? toppage.ItemAt(wxT("left")) : toppage.ItemAt(wxT("right"))); 
+ 
+   path = page.ItemAt(wxT("path")).AsString(); 
+   pos = page.ItemAt(wxT("pos")).AsInt(); 
+   topline = page.ItemAt(wxT("topline")).AsInt(); 
+   syntax = page.ItemAt(wxT("syntax")).AsString(); 
+ 
+   // doc_id 
+   di.type = (doc_type)page.ItemAt(wxT("doc_type")).AsInt(); 
+   di.document_id = page.ItemAt(wxT("doc_doc")).AsInt(); 
+   di.version_id = page.ItemAt(wxT("doc_version")).AsInt(); 
+ 
+   // Set folds 
+   const wxJSONValue foldsArray = page.ItemAt(wxT("folds")); 
+   for (int f = 0; f < foldsArray.Size(); ++f) { 
+      folds.push_back(foldsArray.ItemAt(f).AsInt()); 
+   } 
+ 
+   // Set bookmarks 
+   const wxJSONValue bookmarksArray = page.ItemAt(wxT("bookmarks")); 
+   for (int b = 0; b < bookmarksArray.Size(); ++b) { 
+      bookmarks.push_back(bookmarksArray.ItemAt(b).AsInt()); 
+   } 
+} 
