@@ -41,6 +41,7 @@ public:
 	
 	void LoadSettings();
 	void SaveSettings();
+	std::vector<BuildSettings>& GetAllSettings() { return m_settings; }
 	BuildSettings GetBuildSettings();
 	void BuildSettingsChanged();
 
@@ -56,6 +57,7 @@ public:
 	
 	bool HasError(EditorCtrl& editor, unsigned int line);
 	bool HasWarning(EditorCtrl& editor, unsigned int line);
+	wxString GetErrorMessage(EditorCtrl& editor, unsigned int line);
 private:
 	void ProcessEditorErrors(EditorCtrl& editor);
 	

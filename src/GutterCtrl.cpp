@@ -19,6 +19,7 @@
 
 #include "images/error.xpm"
 #include "images/warning.xpm"
+#include "wx/tipwin.h"
 
 #ifndef WX_PRECOMP
 #include <wx/dc.h>
@@ -52,7 +53,7 @@ GutterCtrl::GutterCtrl(EditorCtrl& parent, BuildErrorsManager* errorManager, wxW
 	m_showBookmarks(true), 
 	m_showFolds(true), m_currentFold(NULL), m_posBeforeFoldClick(-1),
 	m_theme(m_editorCtrl.GetTheme()),
-	m_currentSel(-1)
+	m_currentSel(-1), m_activeErrorMessage(NULL)
 {
 	m_errorBitmap = wxBitmap(error_xpm);
 	m_warningBitmap = wxBitmap(warning_xpm);
@@ -255,10 +256,10 @@ void GutterCtrl::DrawGutter(wxDC& dc) {
 		// Draw errors
 		if(m_errorManager->HasError(m_editorCtrl, i+1)) {
 			m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
-			m_mdc.DrawBitmap(m_errorBitmap, 2, ypos + line_middle - 8);
+			m_mdc.DrawBitmap(m_errorBitmap, 2, ypos + line_middle - 8, true);
 		} else if(m_errorManager->HasWarning(m_editorCtrl, i+1)) {
 			m_mdc.SetBackground(wxBrush(m_theme.gutterColor));
-			m_mdc.DrawBitmap(m_warningBitmap, 2, ypos + line_middle - 7);
+			m_mdc.DrawBitmap(m_warningBitmap, 2, ypos + line_middle - 7, true);
 		} 
 
 		// Draw the line number
@@ -506,6 +507,21 @@ void GutterCtrl::ClickOnFold(unsigned int y) {
 	}
 }
 
+unsigned int GutterCtrl::GetLineId(const int y) {
+	Lines& lines = m_editorCtrl.GetLines();
+	unsigned int line_id;
+	if (y < 0) line_id = 0;
+	else if (y < lines.GetHeight()) {
+		line_id = lines.GetLineFromYPos(y);
+	}
+	else {
+		const unsigned int linecount = lines.GetLineCount();
+		line_id = linecount ? linecount-1 : 0;
+	}
+
+	return line_id;
+}
+
 void GutterCtrl::OnMouseMotion(wxMouseEvent& event) {
 	Lines& lines = m_editorCtrl.GetLines();
 
@@ -514,12 +530,8 @@ void GutterCtrl::OnMouseMotion(wxMouseEvent& event) {
 
 	if (event.LeftIsDown() && HasCapture()) {
 		// Find out what is under mouse
-		unsigned int line_id;
-		if (y < 0) line_id = 0;
-		else if (y < lines.GetHeight()) {
-			line_id = lines.GetLineFromYPos(y);
-		}
-		else {
+		unsigned int line_id = GetLineId(y);
+		if(y >= lines.GetHeight()) {
 			if (m_sel_startoutside && m_currentSel != -1) {
 				// Make sure we remove current selection
 				m_currentSel = lines.UpdateSelection(m_currentSel, 0, 0);
@@ -527,9 +539,6 @@ void GutterCtrl::OnMouseMotion(wxMouseEvent& event) {
 				m_editorCtrl.DrawLayout();
 				return;
 			}
-
-			const unsigned int linecount = lines.GetLineCount();
-			line_id = linecount ? linecount-1 : 0;
 		}
 
 		// Select the lines
@@ -557,13 +566,31 @@ void GutterCtrl::OnMouseMotion(wxMouseEvent& event) {
 			m_editorCtrl.DrawLayout();
 		}
 	}
-	else if (event.GetX() > (int)m_foldStartX && 0 <=y && y < lines.GetHeight()) {
-		const unsigned int line_id = lines.GetLineFromYPos(y);
-		vector<cxFold*> foldStack = m_editorCtrl.GetFoldStack(line_id);
-		if (!foldStack.empty()) {
-			m_currentFold = foldStack.back();
-			DrawGutter(); // Redraw gutter to show highlights
-			return;
+	else {
+		if (event.GetX() > (int)m_foldStartX && 0 <=y && y < lines.GetHeight()) {
+			const unsigned int line_id = lines.GetLineFromYPos(y);
+			vector<cxFold*> foldStack = m_editorCtrl.GetFoldStack(line_id);
+			if (!foldStack.empty()) {
+				m_currentFold = foldStack.back();
+				DrawGutter(); // Redraw gutter to show highlights
+				return;
+			}
+		}
+
+		unsigned int line_id = GetLineId(y);
+		wxString message = m_errorManager->GetErrorMessage(m_editorCtrl, line_id);
+		if(!message.empty()) {
+			if(m_activeErrorMessage && m_activeErrorMessage->GetLabel() != message) {
+				wxLogDebug(wxT("Closing %s %s"), m_activeErrorMessage->GetLabel(), message);
+					m_activeErrorMessage->Close();
+			}
+			if(!m_activeErrorMessage) {
+				wxLogDebug(wxT("recreating"));
+				m_activeErrorMessage = new wxTipWindow(this, message, 200, &m_activeErrorMessage);
+			}
+		} else if(m_activeErrorMessage) {
+			wxLogDebug(wxT("empty message"));
+			m_activeErrorMessage->Close();
 		}
 	}
 
@@ -577,6 +604,11 @@ void GutterCtrl::OnMouseLeave(wxMouseEvent& WXUNUSED(event)) {
 	if (m_currentFold) {
 		m_currentFold = NULL;
 		DrawGutter(); // Redraw gutter to remove highlights
+	}
+
+	if(m_activeErrorMessage) {
+		wxLogDebug(wxT("mouse leave"));
+		//m_activeErrorMessage->Close();
 	}
 }
 

@@ -1137,6 +1137,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BuildSettingsDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BuildSettingsDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\BuildThread.cpp"
 				>
 			</File>

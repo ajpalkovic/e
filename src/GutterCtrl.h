@@ -19,6 +19,7 @@
 #include <wx/control.h>
 #include <wx/dcmemory.h>
 #endif
+#include "wx/tipwin.h"
 
 struct tmTheme;
 struct cxFold;
@@ -36,6 +37,8 @@ public:
 	unsigned int CalcLayout(unsigned int height);
 	void DrawGutter();
 	void DrawGutter(wxDC& dc);
+
+	unsigned int GetLineId(const int y);
 
 private:
 	void ClickOnFold(unsigned int y);
@@ -57,7 +60,6 @@ private:
 	BuildErrorsManager* m_errorManager;
 	wxMemoryDC m_mdc;
 	wxBitmap m_bitmap;
-	wxBitmap m_errorBitmap, m_warningBitmap;
 	int m_max_digits;
 	int m_digit_width;
 	unsigned int m_width;
@@ -82,6 +84,9 @@ private:
 	bool m_sel_startoutside;
 	unsigned int m_sel_startline;
 	unsigned int m_sel_endline;
+	
+	wxBitmap m_errorBitmap, m_warningBitmap;
+	wxTipWindow* m_activeErrorMessage;
 };
 
 #endif // __GUTTERCTRL_H__

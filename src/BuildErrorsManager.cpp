@@ -146,11 +146,13 @@ cxEnv BuildErrorsManager::GetEnv() {
 
 void BuildErrorsManager::UpdateEnv(EditorCtrl* editor) {
 	wxString fileList = wxT("");
-	for(unsigned int c = 0; c < m_files.size()-1; c++) {
-		fileList += m_files[c].GetFullPath();
-		fileList += wxT(";");
+	if(m_files.size() > 0) {
+		for(unsigned int c = 0; c < m_files.size()-1; c++) {
+			fileList += m_files[c].GetFullPath();
+			fileList += wxT(";");
+		}
+		fileList += m_files[m_files.size()-1].GetFullPath();
 	}
-	fileList += m_files[m_files.size()-1].GetFullPath();
 
 	//Update the cxEnv inside of the wx event thread, instead of in the build thread.
 	m_env = cxEnv();
@@ -247,12 +249,8 @@ void BuildErrorsManager::BuildComplete(wxString& buildOutput) {
 bool BuildErrorsManager::HasError(EditorCtrl& editor, unsigned int line) {
 	wxMutexLocker lock(m_mutex);
 	
-	//Check if the list of errors has been updated since we last parsed them for this document.
 	unsigned int id = editor.GetDocID().document_id;
-	if(m_editorErrorsLastUpdated.find(id) == m_editorErrorsLastUpdated.end() || m_editorErrorsLastUpdated[id] < m_outputLastChanged) {
-		ProcessEditorErrors(editor);
-	}
-	m_editorErrorsLastUpdated[id] = m_outputLastChanged;
+	ProcessEditorErrors(editor);
 	
 	//Technically, I don't need the first condition, but it should save a bit on memory
 	return m_editorErrors[id].find(line) != m_editorErrors[id].end() && m_editorErrors[id][line].hasError;
@@ -262,19 +260,29 @@ bool BuildErrorsManager::HasWarning(EditorCtrl& editor, unsigned int line) {
 	wxMutexLocker lock(m_mutex);
 	
 	unsigned int id = editor.GetDocID().document_id;
-	if(m_editorErrorsLastUpdated.find(id) == m_editorErrorsLastUpdated.end() || m_editorErrorsLastUpdated[id] < m_outputLastChanged) {
-		ProcessEditorErrors(editor);
-	}
-	m_editorErrorsLastUpdated[id] = m_outputLastChanged;
-	
+	ProcessEditorErrors(editor);
 	return m_editorErrors[id].find(line) != m_editorErrors[id].end() && m_editorErrors[id][line].hasWarning;
 }
 
+wxString BuildErrorsManager::GetErrorMessage(EditorCtrl& editor, unsigned int line) {
+	wxMutexLocker lock(m_mutex);
+	
+	unsigned int id = editor.GetDocID().document_id;
+	ProcessEditorErrors(editor);
+	return m_editorErrors[id][line].GetMessage();
+}
+
 void BuildErrorsManager::ProcessEditorErrors(EditorCtrl& editor) {
-	wxFileName filename = editor.GetFilePath();
 	unsigned int id = editor.GetDocID().document_id;
 	
+	//Check if the list of errors has been updated since we last parsed them for this document.
+	if(!(m_editorErrorsLastUpdated.find(id) == m_editorErrorsLastUpdated.end() || m_editorErrorsLastUpdated[id] < m_outputLastChanged)) {
+		return;
+	}
+
+	wxFileName filename = editor.GetFilePath();
 	m_editorErrors[id] = map<int, BuildErrorLine>();
+	m_editorErrorsLastUpdated[id] = m_outputLastChanged;
 
 	for(unsigned int c = 0; c < m_errors.size(); c++) {
 		BuildError* error = &(m_errors[c]);

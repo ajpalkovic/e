@@ -43,6 +43,7 @@ public:
 class BuildErrorLine {
 public:
 	BuildErrorLine();
+	wxString GetMessage();
 	void AddError(BuildError* error);
 	std::vector<BuildError*> errors;
 	bool hasError, hasWarning;

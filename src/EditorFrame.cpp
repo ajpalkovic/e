@@ -71,6 +71,7 @@
 #include "SnippetList.h"
 #include "BuildPane.h"
 #include "BuildErrorsManager.h"
+#include "BuildSettingsDlg.h"
 
 #ifdef __WXMSW__
 // For multi-monitor-aware position restore on Windows, include WinUser.h
@@ -312,6 +313,8 @@ EditorFrame::EditorFrame(CatalystWrapper cat, unsigned int frameId,  const wxStr
 
 	m_remoteThread = new RemoteThread();
 	m_errorManager = new BuildErrorsManager();
+	BuildSettingsDlg* dlg = new BuildSettingsDlg(this, m_errorManager);
+	dlg->ShowModal();
 
 	// Create the dirwatcher (will not be explicitly deleted, deletes as thread on app exit)
 	m_dirWatcher = new DirWatcher();

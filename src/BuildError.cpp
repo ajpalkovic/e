@@ -78,3 +78,15 @@ void BuildErrorLine::AddError(BuildError* error) {
 	hasWarning = hasWarning || !error->isError;
 	errors.push_back(error);
 }
+
+wxString BuildErrorLine::GetMessage() {
+	wxString ret = wxT("");
+	if(errors.size() >= 1) {
+		ret += errors[0]->message;
+	}
+	for(unsigned int c = 1; c < errors.size(); c++) {
+		ret += wxT("\n");
+		ret += errors[c]->message;
+	}
+	return ret;
+}
