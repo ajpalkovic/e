@@ -8,8 +8,9 @@ _download()
   echo "Downloading external libraries..."
   echo
   pushd arch
-  wget -nc http://libtomcrypt.com/files/crypt-1.11.tar.bz2
-  wget -nc http://math.libtomcrypt.com/files/ltm-0.39.tar.bz2
+  wget -nc http://leeseon.com/private/crypt-1.17.tar.bz2
+  wget -nc http://leeseon.com/private/ltm-0.39.tar.bz2
+  wget -nc http://prdownloads.sourceforge.net/bakefile/bakefile-0.2.8.tar.gz?download
   wget -nc http://www.equi4.com/pub/mk/metakit-2.4.9.7.tar.gz
   wget -nc ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-7.9.tar.gz
   wget -nc http://kent.dl.sourceforge.net/sourceforge/tinyxml/tinyxml_2_5_3.tar.gz
@@ -37,6 +38,7 @@ _extract_and_patch()
   echo
   tar -xjf arch/crypt-*
   tar -xjf arch/ltm-*
+  tar -xzf arch/bakefile-*
   tar -xzf arch/metakit-*
   tar -xzf arch/pcre-*
   tar -xzf arch/tinyxml_*
@@ -48,6 +50,7 @@ _extract_and_patch()
   echo
   mv libtomcrypt-* libtomcrypt
   mv libtommath-* libtommath
+  mv bakefile-* bakefile
   mv metakit-* metakit
   mv pcre-* pcre
   mv wxWidgets-* wxwidgets

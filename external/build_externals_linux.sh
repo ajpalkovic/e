@@ -37,6 +37,14 @@ if [[ ! -e $output ]]; then
     mkdir -p $output
 fi
 
+#bakefile
+pushd bakefile
+./configure --prefix=$output &&
+    make && 
+    make install ||
+        ( echo "Cannot compile bakefile"; exit 1 )
+popd
+
 # Metakit
 pushd metakit
 cd builds &&
@@ -53,7 +61,7 @@ pushd pcre
     make clean &&
     make &&
     make install &&
-    cp config.h ucp.h $output/include ||
+    cp config.h ucp.h pcre_internal.h $output/include ||
         ( echo "Cannot compile pcre" ; exit 1 )
 popd
 

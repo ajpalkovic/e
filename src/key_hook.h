@@ -10,7 +10,9 @@
 #endif
 
 #ifdef __WXGTK__
-	#include <gtk/gtk.h>
+#define GSocket GlibGSocket 	
+#include <gtk/gtk.h>
+#undef GSocket
 //#include <gdk/gdkevents.h>
 //#include <gdk/gdkwindow.h>
 #endif
