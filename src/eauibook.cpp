@@ -14,7 +14,7 @@ class wxTabFrame : public wxWindow
 public:
     wxTabFrame();
     ~wxTabFrame();
-    void SetTabCtrlHeight(int h);
+//    void SetTabCtrlHeight(int h);
     void DoSetSize(int x, int y,
                    int width, int height,
                    int WXUNUSED(sizeFlags = wxSIZE_AUTO));
@@ -166,7 +166,7 @@ bool eAuiNotebook::LoadPerspective(const wxString& layout) {
 											wxDefaultSize,
 											wxNO_BORDER|wxWANTS_CHARS);
 		new_tabs->m_tabs->SetArtProvider(m_tabs.GetArtProvider()->Clone());
-		new_tabs->SetTabCtrlHeight(m_tab_ctrl_height);
+//		new_tabs->SetTabCtrlHeight(m_tab_ctrl_height);
 		new_tabs->m_tabs->SetFlags(m_flags);
 		wxAuiTabCtrl *dest_tabs = new_tabs->m_tabs;
 
