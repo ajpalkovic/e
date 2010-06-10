@@ -18,7 +18,7 @@ endif
 ifeq ($(DEBUG),0)
 	ECORE    = ecore
 	CXXFLAGS = -O2 -DLINUX
-	LDFLAGS  =
+	LDFLAGS  = -z muldefs
 	EXT_DIR  = $(ROOTDIR)/external/out.release
 	OUTDIR   = .objs.release
 	EXE      = e
